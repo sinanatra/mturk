@@ -1,0 +1,223 @@
+@font-face {
+  font-family: 'TimesDotRom';
+  src:  url('./TimesDotRom.woff') format('woff')
+}
+
+@font-face {
+  font-family: 'terminal-grotesque';
+  src:  url('./terminal-grotesque.woff') format('woff')
+}
+
+
+html {
+  background-color: #FFF9D2;
+  --cream: #FFF9D2;
+  --olive:#838B85;
+  --dark: #1A1A1A;
+}
+
+img {
+  filter: grayscale(100%) opacity(0.5);
+}
+
+body {
+  background-color: white;
+  color: black;
+  font-family: "TimesDotRom", serif;
+  margin: 0;
+  padding: 0;
+  font-size: 18px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+h1, h2,h3,h4, p{
+  font-weight: 400;
+  margin: 0;
+  padding: 0;
+}
+
+h1, h2,h3,h4 {
+  font-family: "terminal-grotesque", monospace;
+  line-height: 1.5rem;
+  padding-bottom: 1rem;
+}
+
+h1 {
+  font-size: 2.5rem;
+  line-height: 2.2rem;
+}
+
+h2 {
+  font-size: 1.5rem;
+}
+
+h3 {
+  margin-top: 1rem;
+  font-size: 1.25rem;
+}
+
+p {
+  line-height: 1.5rem;
+}
+
+article {
+  display: flex;
+}
+
+.desc {
+  width: 330px;
+  max-width: 330px;
+  background: var(--cream);
+  padding: 0 1rem 0 .5rem;
+  word-break: break-word;
+}
+
+.desc img {
+  width: 100%;
+}
+
+section {
+  display: flex;
+  flex: 4;
+  height: 100vh;
+}
+
+.desc > *, .images h4 {
+  padding: .25rem;
+}
+
+.desc > *:last-child {
+  padding-bottom: 2rem;
+}
+
+.images h4 {
+  font-size: 2vmin;
+}
+
+#map {
+  flex: 1;
+  min-width: 500px;
+  background: var(--olive);
+}
+
+#worldmap {
+  fill: var(--dark);
+}
+
+.images {
+  flex: 2;
+  background: var(--dark);
+  overflow: scroll;
+  color: var(--olive);
+  /* border-right: 1px dashed;
+  border-left: 1px dashed; */
+}
+
+article > div {
+  height: 100vh;
+  overflow: scroll;
+}
+
+.images {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.images div {
+  width: 25%;
+  /* border: 1px dashed; */
+}
+
+.image--zoom {
+  width: 50% !important;
+  height: 50% !important;
+  cursor: zoom-out;
+}
+
+.image--zoom img {
+  height: 100% !important;
+}
+
+.images img {
+  width: 100%;
+  height: 130px;
+  object-fit: cover;
+}
+
+.mark {
+  fill: var(--cream);
+  stroke: black;
+  -webkit-transition: r .5s;
+  transition: r .5s;
+}
+
+.images-js.color {
+  background: var(--cream);
+  color: var(--dark);
+}
+
+::selection {
+  background-color: yellow;
+}
+
+.images-js, circle {
+  cursor: cell;
+}
+
+
+@media all and (max-width: 1200px) {
+  .desc {
+    width: 25vw;
+    max-width:unset;
+    min-width: 300px;
+  }
+
+  section {
+    display: unset;
+    flex-direction:row;
+    justify-content: space-between;
+  }
+
+  #map, .images {
+    height: 50vh;
+    flex: 100%;
+    width: 100%;
+  }
+}
+
+
+@media all and (max-width: 770px) {
+  article {
+    display: block;
+  }
+
+  .desc {
+    width: unset;
+    padding: 0 1rem 0 .5rem;
+  }
+
+  section {
+    width: 100vw;
+    height: auto;
+  }
+
+  .desc, #map, .images {
+    min-width: unset;
+    height: 80vh;
+  }
+
+  .desc {
+    height: 80vh;
+  }
+  
+  .images h4 {
+    font-size: 4vmin;
+  }
+}
+
+quote {
+  font-style: italic;
+  color: var(--olive);
+}

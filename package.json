@@ -1,0 +1,30 @@
+{
+  "name": "html-starterkit",
+  "version": "1.0.0",
+  "description": "A starterkit for my html projects",
+  "author": "sinanatra",
+  "license": "MIT",
+  "private": false,
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "node esbuild.config.js",
+    "start": "node esbuild.config.js -w"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sinanatra/html-starterkit.git"
+  },
+  "devDependencies": {
+    "esbuild": "^0.12.19",
+    "esbuild-serve": "^1.0.1",
+    "jquery": "^3.5.1"
+  },
+  "dependencies": {
+    "d3": "^7.4.4",
+    "d3-geo-projection": "^4.0.0",
+    "topojson": "^3.0.2",
+    "topojson-client": "^3.1.0"
+  }
+}
