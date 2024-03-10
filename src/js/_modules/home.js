@@ -80,8 +80,8 @@ const Home = {
           .attr("target", "_blank")
           .attr("href", (d) => `https://drive.google.com/uc?export=view&id=${d["img"].replace("https://drive.google.com/u/0/open?usp=forms_web&id=", "")}`)
           .append("img")
-          .attr("src", (d) => `https://drive.google.com/uc?export=view&id=${d["img"].replace("https://drive.google.com/u/0/open?usp=forms_web&id=", "")}`)
-        div.append("h4")
+          .attr("src", (d) => `https://lh3.googleusercontent.com/d/${d["img"].replace("https://drive.google.com/u/0/open?usp=forms_web&id=", "")}`)
+          div.append("h4")
           .text((d) => `${d["city"]}`)
 
         const svg = d3.select("#map svg")
