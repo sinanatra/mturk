@@ -74,6 +74,7 @@ const Home = {
           .attr("class", (d) => "images-js")
           .on('mouseover', onMouseover)
           .on('mouseout', onMouseout)
+
         // .on('click', onMouseClick);
 
         div.append("a")
@@ -81,7 +82,11 @@ const Home = {
           .attr("href", (d) => `https://drive.google.com/uc?export=view&id=${d["img"].replace("https://drive.google.com/u/0/open?usp=forms_web&id=", "")}`)
           .append("img")
           .attr("src", (d) => `https://lh3.googleusercontent.com/d/${d["img"].replace("https://drive.google.com/u/0/open?usp=forms_web&id=", "")}`)
-          div.append("h4")
+          .on("error", function () {
+            d3.select(this).style("visibility", "hidden");
+          })
+
+        div.append("h4")
           .text((d) => `${d["city"]}`)
 
         const svg = d3.select("#map svg")

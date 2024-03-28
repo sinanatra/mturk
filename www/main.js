@@ -25785,7 +25785,9 @@
       d3.tsv("./windows.tsv").then(function(tsv3) {
         console.log(tsv3);
         const div = d3.select(".images").selectAll("img").data(d3.shuffle(tsv3)).enter().append("div").attr("data-attr", (d) => `${d["img"].replace("https://drive.google.com/u/0/open?usp=forms_web&id=", "")}`).attr("class", (d) => "images-js").on("mouseover", onMouseover).on("mouseout", onMouseout);
-        div.append("a").attr("target", "_blank").attr("href", (d) => `https://drive.google.com/uc?export=view&id=${d["img"].replace("https://drive.google.com/u/0/open?usp=forms_web&id=", "")}`).append("img").attr("src", (d) => `https://lh3.googleusercontent.com/d/${d["img"].replace("https://drive.google.com/u/0/open?usp=forms_web&id=", "")}`);
+        div.append("a").attr("target", "_blank").attr("href", (d) => `https://drive.google.com/uc?export=view&id=${d["img"].replace("https://drive.google.com/u/0/open?usp=forms_web&id=", "")}`).append("img").attr("src", (d) => `https://lh3.googleusercontent.com/d/${d["img"].replace("https://drive.google.com/u/0/open?usp=forms_web&id=", "")}`).on("error", function() {
+          d3.select(this).style("visibility", "hidden");
+        });
         div.append("h4").text((d) => `${d["city"]}`);
         const svg2 = d3.select("#map svg");
         svg2.selectAll(".mark").data(tsv3).enter().append("circle").attr("class", "mark").attr("r", 3).attr("data-attr", (d) => `${d["img"].replace("https://drive.google.com/u/0/open?usp=forms_web&id=", "")}`).attr("class", (d) => "mark").attr("transform", function(d) {
