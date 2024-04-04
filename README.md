@@ -1,27 +1,22 @@
-# HTML Theme Starterkit
+# Views of Mechanical Turks
 
-This repo is my own starterkit for HTML projects. It works with esbuild and it allows to work with ES6. 
+Install dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
 
-## Requirements
+```bash
+npm run dev
 
-+ [Node.js](https://nodejs.org/en/) and [yarn](https://classic.yarnpkg.com/en/docs/install/#mac-stable).
-
-## Installation
-
-1. In Terminal, go to your production folder:
-```
-cd path/to/my/folder
+# or start the server and open the app in a new browser tab
+npm run dev -- --open
 ```
 
-2. Clone this repository
-```
-git clone https://github.com/sinanatra/html-starterkit NAME-OF-MY-FOLDER
-cd NAME-OF-MY-FOLDER
+## Building
+
+To create a production version of your app:
+
+```bash
+npm run build
 ```
 
-3. Install dependencies with yarn
-```
-yarn
-```
+You can preview the production build with `npm run preview`.
 
-4. Type yarn start now and to start coding. 
+> To deploy your app, you may need to install an [adapter](https://kit.svelte.dev/docs/adapters) for your target environment.

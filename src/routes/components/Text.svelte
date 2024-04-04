@@ -1,0 +1,176 @@
+<section class="desc">
+    <h1>Views from Mechanical Turk</h1>
+    <h2>
+        I asked the workers at Amazon Mechanical Turk to send me a photo of
+        their view out of the window for $0.20. Here are the photos I received
+        and the city they were sent from.
+    </h2>
+    <h3>Context</h3>
+    <p>
+        The following texts are extracted and updated (June, 2022) from the
+        research conducted as part of the individual thesis project in the
+        master department Information Design at Design Academy Eindhoven (NL),
+        2019.
+        <br />More information
+        <a href="https://thesis.giacomonanni.info/" target="_blank">here</a>.
+    </p>
+    <h3>Creating Datasets and Mechanical Turk</h3>
+    <p>
+        The ever-growing use of platforms such as Amazon Mechanical Turk, allow
+        large groups of individuals to participate in creating, tagging and
+        describing data.
+        <br />
+        Introduced by Amazon in 2005, Mechanical Turk is named after an 18th century
+        “automatic” chess-playing machine, which was handily beating humans in chess
+        games. Of course, the robot was not using any artificial intelligence algorithms
+        back then. The secret of the Mechanical Turk machine was a human operator,
+        hidden inside the machine, who was the real intelligence (Ipeirotis, 2010).
+        <br />
+        <img src="./mturk.png" alt="Mechanical Turk" />
+        Today, Amazon Mechanical Turk is a marketplace for tasks that cannot be easily
+        automated, which are then fulfilled by human users.
+        <br />
+        Such tasks, mainly involve the creation of datasets: collections of data
+        that act as pedagogical learning material when dealing with Artificial intelligences,
+        most specifically, machine learning systems. Current Artificial intelligences
+        are, in fact, not programmed anymore in the old-fashioned way, where for
+        instance to distinguish images of apples from pears lines of code expressing
+        specific rules were written (e.g., if the colour is red, then it’s an apple).
+        Instead, current machine learning models are able to "learn” to execute such
+        tasks by simply repeatedly analysing large numbers of labelled examples (images
+        of apples) and counterexamples (images of pears). Although these materials
+        are often created to test the performance of algorithms, they tend to show
+        how little attention is placed on the quality of the data itself.
+        <br />
+        Such data is analysed and processed by workers on platforms like Mechanical
+        Turks. But little is known about these individuals that complete these tasks.
+        Ipeirotis’s analysis shows that the majority of the workers are operating
+        in the United States, with an increasing proportion coming from India in
+        the past few years. But these analyses study the overall usage of those platforms,
+        whereas there are no public traces of the turkers who helped shape any globally
+        used dataset.
+    </p>
+    <h3>Images of the Process</h3>
+    <div>
+        <img src="./img1.png" alt="Google Formulaire" />
+        <quote
+            >A screenshot of the questionnaire provided on Mechanical Turks.</quote
+        >
+        <img src="./img2.png" alt="Mechanical Turk" />
+        <quote>A screenshot of the review page from Mechanical Turks.</quote>
+    </div>
+    <h3>Geography of Datasets</h3>
+    <quote
+        >"Information has always had geography. It is from somewhere; about
+        somewhere; it evolves and is transformed somewhere; it is mediaxted by
+        networks, infrastructures, and technologies: all of which exist in
+        physical, material places"
+    </quote>
+    (Graham et al., 2015).
+    <p>
+        Datasets are no exception. The information they carry is a reflection of
+        time, politics and geographical contexts.
+        <br />
+        Although, in the past years, there has been a growing attention of bias studies
+        in the field of machine learning, there is still a general disinterest for
+        the ones carried by the hidden geographies of datasets. If in Code/Space,
+        Robert Kitchin and Martin Dodge wrote: Software matters because it alters
+        the conditions through which society, space, and time, and thus spatiality,
+        are produced, we could rewrite the sentence by saying that data matters,
+        because it alters the conditions through which society, space, and time,
+        and thus spatiality, are produced.
+        <br />
+        Software produces multiple types of spatialities and datasets have their
+        own geographic distribution. From the locations of their creators, that influence
+        their browser navigation, to the digital platforms where the data is fetched,
+        reaching until the original metadata of each source. All of these things
+        are informational, but are also part of the place itself; they are part of
+        how we enact and bring the place into being (Kitchin & Dodge, 2011).
+        <br />
+        The same research questions, should apply to the individuals that are employed
+        to structure datasets.
+    </p>
+    <h3>The purpose of this website</h3>
+    <p>
+        As organisations use Mechanical Turk to create datasets, in this website
+        a more private dataset is shown. Following the logic of the platform,
+        for a small fee workers have been asked to show a glimpse of their
+        private life, their view close to their desk, their working station. At
+        the limit of ethics and labour exploitation we should ask ourselves
+        whether this is an acceptable approach to use in research and in
+        general, if employing randomic workers around the world is the ideal
+        practice to shape future artificial intelligences.
+        <br />
+        With this experiment, design becomes a critical tool, it investigates the
+        sources of datasets, and it helps framing a critical discussion around the
+        decisions that few individuals are taking. As Farinelli calls for a focus
+        on digital geographies, which still suffers from a lack of attention, the
+        same applies for the need for an “algorithmic culture” (Dourish, 2016) (Gillespie,
+        2013)(Gillespie, T., & Seaver, N., 2015 )(Striphas, 2015). Or more specifically
+        an algorithmic literacy (Gillespie, 2013), making people understand that
+        the tools they engage with will give certain types of answers back, and if
+        they find those politically troubling, they should see them as artefacts
+        of the way those systems work (ibidem).
+        <br />
+        Design allows information to be questioned and awareness to be spread, even
+        outside the strictly journalistic sense, focusing on what Verbeek (2005)
+        calls mediated morality:
+    </p>
+    <quote
+        >"Designers cannot but help to shape moral decisions and practices.
+        Designing is materializing morality."
+    </quote>
+
+    <h3>Bibliographic reference</h3>
+    <p>
+        Dourish, P. (2016). Algorithms and their others: Algorithmic culture in
+        context. Big Data & Society, 3(2), 205395171666512.
+        https://doi.org/10.1177/2053951716665128
+        <br /><br />
+        Graham et al., 2015, Towards a study of information geographies: [im]mutable
+        augmentations and a mapping of the geographies of information. Retrieved
+        17 January 2019, from https://rgs-ibg.onlinelibrary.wiley.com/doi/full/10.1002/geo2.8.
+        <br /><br />
+        Gillespie, T. (2013, May 17). Tarleton Gillespie: ‘The Relevance of Algorithms’.
+        Retrieved 30 January 2019, from https://vimeo.com/69641358
+        <br /><br />
+        Gillespie, T., & Seaver, N., 2015, Critical Algorithm Studies: a Reading
+        List. Retrieved 18 January 2019, from https://socialmediacollective.org/reading-lists/critical-algorithm-studies/
+        <br /><br />
+        Ipeirotis, P. G. (2010). Analyzing the Amazon Mechanical Turk marketplace.
+        XRDS: Crossroads, The ACM Magazine for Students, 17(2), 16–21. https://doi.org/10.1145/1869086.1869094
+        <br /><br />
+        Kitchin, R., & Dodge, M. (2011). Code/space: software and everyday life.
+        Cambridge, Mass: MIT Press.
+        <br /><br />
+        Striphas, T. (2015). Algorithmic culture. European Journal of Cultural Studies,
+        18(4–5), 395–412. https://doi.org/10.1177/1367549415577392
+        <br /><br />
+        Verbeek, P.-P. (2005). What things do: Philosophical reflections on technology,
+        agency, and design. University Park, Pa: Pennsylvania State University Press.
+        <br /><br />
+        Verbeek, P.P. (2011), Moralizing Technology: Understanding and Designing
+        the Morality of Things. Chicago and London: University of Chicago Press.
+    </p>
+</section>
+
+<style>
+    section {
+        width: 100%;
+        max-width: 330px;
+        background: #fff9d2;
+        padding: 0 1rem 0 0.5rem;
+        word-break: break-word;
+        overflow: scroll;
+    }
+
+    img {
+        width: 100%;
+    }
+
+    @media all and (max-width: 650px) {
+        section {
+            max-width: 100%;
+        }
+    }
+</style>

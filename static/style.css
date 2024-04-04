@@ -1,0 +1,58 @@
+@font-face {
+    font-family: 'TimesDotRom';
+    src: url('./TimesDotRom.woff') format('woff')
+}
+
+@font-face {
+    font-family: 'terminal-grotesque';
+    src: url('./terminal-grotesque.woff') format('woff')
+}
+
+body {
+    background-color: white;
+    color: black;
+    font-family: "TimesDotRom", serif;
+    margin: 0;
+    padding: 0;
+    font-size: 18px;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+}
+
+h1,
+h2,
+h3,
+h4,
+p {
+    font-weight: 400;
+    margin: 0;
+    padding: 0;
+}
+
+h1,
+h2,
+h3,
+h4 {
+    font-family: "terminal-grotesque", monospace;
+    line-height: 1.5rem;
+    padding-bottom: 1rem;
+}
+
+h1 {
+    font-size: 2.5rem;
+    line-height: 2.2rem;
+}
+
+h2 {
+    font-size: 1.5rem;
+}
+
+h3 {
+    margin-top: 1rem;
+    font-size: 1.25rem;
+}
+
+p {
+    line-height: 1.5rem;
+}
