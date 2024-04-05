@@ -6,56 +6,55 @@
     let scroll = true;
 
     $: {
-        $selected;
-        if (
-            scroll &&
-            selectedElement &&
-            selectedElement.classList.contains("selected")
-        ) {
-            console.log(selectedElement.classList);
+        if ($selected == data["img"] && selectedElement) {
             selectedElement.scrollIntoView({
                 behavior: "smooth",
-                block: "end",
+                block: "center",
                 inline: "nearest",
             });
         }
     }
 </script>
 
-<a href={data["img"]} target="_blank" rel="noopener noreferrer">
-    <img
-        src="https://lh3.googleusercontent.com/d/{data['img'].replace(
-            'https://drive.google.com/u/0/open?usp=forms_web&id=',
-            '',
-        )}"
-        alt=""
-        srcset=""
-        onerror="this.style.visibility='hidden'"
-        on:mouseover={() => {
-            scroll = false;
-            $selected = data["img"];
-        }}
-        on:focus={() => {
-            scroll = false;
-            $selected = data["img"];
-        }}
-        class:selected={$selected == data["img"]}
-        bind:this={selectedElement}
-    />
-</a>
-<h4>{data["city"]}</h4>
+<div class:selected={$selected == data["img"]} bind:this={selectedElement}>
+    <a href={data["img"]} target="_blank" rel="noopener noreferrer">
+        <img
+            src="https://lh3.googleusercontent.com/d/{data['img'].replace(
+                'https://drive.google.com/u/0/open?usp=forms_web&id=',
+                '',
+            )}"
+            alt=""
+            srcset=""
+            onerror="this.style.visibility='hidden'"
+            on:mouseover={() => {
+                scroll = false;
+                $selected = data["img"];
+            }}
+            on:focus={() => {
+                scroll = false;
+                $selected = data["img"];
+            }}
+        />
+    </a>
+    <h4>{data["city"]}</h4>
+</div>
 
 <style>
-    .selected {
-        background: #fff9d2;
-    }
-
     img {
         cursor: pointer;
         width: 100%;
         height: 130px;
         object-fit: cover;
         filter: grayscale(100%) opacity(0.5);
+    }
+
+    div {
+        width: 25%;
+    }
+
+    div:hover,
+    .selected {
+        background: #fff9d2;
     }
 
     h4 {

@@ -9,8 +9,12 @@
     let width;
     let height;
 
-    let projection;
-    let path;
+    $: projection = geoGuyou()
+        .translate([width / 2, height / 2])
+        .angle(-90)
+        .rotate([18, -90]);
+
+    $: path = geoPath().projection(projection);
     let features = [];
 
     onMount(async () => {
@@ -19,18 +23,10 @@
         ).then((d) => d.json());
 
         features = topojson.feature(world, world.objects.pixel25).features;
-
-        projection = geoGuyou()
-            .translate([width / 2, height / 2])
-            .angle(-90)
-            .rotate([18, -90]);
-
-        path = geoPath().projection(projection);
     });
 </script>
 
-
-<section id="map" bind:clientWidth={width} bind:clientHeight={height}>
+<section id="map" bind bind:clientWidth={width} bind:clientHeight={height}>
     {#if projection != undefined}
         <svg viewBox="0 0 {width} {height}">
             <g fill="#1A1A1A">

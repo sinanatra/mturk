@@ -5,9 +5,7 @@
 
 <section class="gallery">
     {#each data as d}
-        <div>
-            <Image data={d} />
-        </div>
+        <Image data={d} />
     {/each}
 </section>
 
@@ -19,13 +17,5 @@
         flex-wrap: wrap;
         overflow: scroll;
         color: #838b85;
-    }
-
-    div {
-        width: 25%;
-    }
-
-    div:hover {
-        background: #fff9d2;
     }
 </style>
