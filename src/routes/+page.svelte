@@ -1,32 +1,49 @@
 <script>
-    import Text from "./components/Text.svelte";
-    import Map from "./components/Map.svelte";
-    import Gallery from "./components/Gallery.svelte";
-
-    import * as d3 from "d3";
-    import { onMount } from "svelte";
-
-    let data = [];
-    onMount(async (d) => {
-        data = await d3.tsv("windows.tsv");
-    });
+    import Intro from "@components/texts/Intro.svelte";
+    import Text_1 from "@components/texts/Text_1.svelte";
+    import Text_2 from "@components/texts/Text_2.svelte";
+    import Text_3 from "@components/texts/Text_3.svelte";
 </script>
 
-{#if data.length == 0}
-    <article>Loading...</article>
-{:else}
-    <article class="container">
-        <Text />
-        <Map {data} />
-        <Gallery {data} />
-    </article>
-{/if}
+<article class="container">
+    <div style="--color-1:#8d9a8f; --color-2:#ffe0e0;">
+        <Intro />
+    </div>
+    <a href="views">
+        <Text_1 />
+    </a>
+    <!-- <a href="screens" style="--color-1:#d2e5ff; --color-2:#ead7fe;">
+        <Text_2 />
+    </a> -->
+    <a href="exausting" style="--color-1:#ffe0e0; --color-2:#efefef;">
+        <Text_3 />
+    </a>
+</article>
 
 <style>
+    a {
+        color: unset;
+        text-decoration: none;
+    }
+
+    a:hover {
+        opacity: 0.8;
+    }
+
     article {
         display: flex;
         height: 100vh;
         width: 100%;
+        background: gainsboro;
+    }
+
+    .container > * {
+        display: flex;
+        margin: 0;
+        padding: 0;
+    }
+    .container a:last-of-type {
+        box-shadow: 7px -7px 16px -8px black;
     }
 
     @media all and (max-width: 650px) {

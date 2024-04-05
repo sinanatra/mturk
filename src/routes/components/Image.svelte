@@ -54,7 +54,7 @@
 
     div:hover,
     .selected {
-        background: #fff9d2;
+        background: var(--color-1);
     }
 
     h4 {

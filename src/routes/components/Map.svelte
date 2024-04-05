@@ -3,7 +3,7 @@
     import { geoGuyou } from "d3-geo-projection";
     import { geoPath } from "d3-geo";
     import * as topojson from "topojson";
-    import { selected } from "../lib/stores/selected";
+    import { selected } from "@stores/selected";
 
     export let data;
     let width;
@@ -34,7 +34,7 @@
                     <path d={path(feature)} class="state" />
                 {/each}
             </g>
-            <g fill="#FFF9D2">
+            <g fill="var(--color-1)">
                 {#each data as d}
                     <circle
                         r="3"
@@ -59,7 +59,7 @@
         width: 100%;
         min-width: 100px;
         max-width: 500px;
-        background: #838b85;
+        background: var(--color-2);
     }
 
     circle {

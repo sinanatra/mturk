@@ -8,9 +8,16 @@
     src: url('./terminal-grotesque.woff') format('woff')
 }
 
+html {
+    --color-1: #fff9d2;
+    --color-2: #838b85;
+    --bg: #1a1a1a;
+}
+
 body {
     background-color: white;
     color: black;
+    background: var(--color-1);
     font-family: "TimesDotRom", serif;
     margin: 0;
     padding: 0;
@@ -55,4 +62,27 @@ h3 {
 
 p {
     line-height: 1.5rem;
+}
+
+quote {
+    display: inline-block;
+    font-family: "terminal-grotesque", sans-serif;
+    padding: 10px;
+}
+
+figure {
+    margin: 10px 0;
+    padding: 0;
+}
+
+figcaption {
+    margin: 0;
+    padding: 0;
+    font-size: .9rem;
+    font-family: "terminal-grotesque", sans-serif;
+}
+
+::selection {
+    background-color: yellow;
+    color: black;
 }

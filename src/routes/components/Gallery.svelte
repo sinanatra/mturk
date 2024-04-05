@@ -1,5 +1,5 @@
 <script>
-    import Image from "./Image.svelte";
+    import Image from "@components/Image.svelte";
     export let data;
 </script>
 
@@ -12,7 +12,7 @@
 <style>
     section {
         width: 100%;
-        background: #1a1a1a;
+        background: var(--bg);
         display: flex;
         flex-wrap: wrap;
         overflow: scroll;
