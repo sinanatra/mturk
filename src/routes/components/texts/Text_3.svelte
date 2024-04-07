@@ -72,7 +72,6 @@
 
 <style>
     section {
-        width: 100%;
         height: calc(100% - 20px);
         max-width: 330px;
         background: var(--color-1);
