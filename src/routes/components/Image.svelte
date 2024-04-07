@@ -6,7 +6,7 @@
     let scroll = true;
 
     $: {
-        if ($selected == data["img"] && selectedElement) {
+        if (scroll && $selected == data["img"] && selectedElement) {
             selectedElement.scrollIntoView({
                 behavior: "smooth",
                 block: "center",

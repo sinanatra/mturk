@@ -1,5 +1,5 @@
 <script>
-    import Text_3 from "@components/texts/Text_3.svelte";
+    import Text_2 from "@components/texts/Text_2.svelte";
     import Map from "@components/Map.svelte";
     import Gallery from "@components/Gallery.svelte";
 
@@ -42,8 +42,8 @@
 {#if data.length == 0}
     <article>Loading...</article>
 {:else}
-    <article class="container" style="--color-1:#ffe0e0; --color-2:#dedede;">
-        <Text_3 />
+    <article class="container" style="--color-1:#ffe0e0; --color-2:#f2f2f2;">
+        <Text_2 />
         <!-- {counter} of {data.length} -->
 
         <article>
@@ -82,6 +82,7 @@
         display: flex;
         height: 100vh;
         background-color: var(--color-2);
+        overflow: hidden;
     }
     section {
         font-family: "terminal-grotesque", sans-serif;
@@ -91,6 +92,7 @@
         border-right: 1px dashed var(--bg);
     }
     div {
+        width: 430px;
         min-height: 500px;
     }
 

@@ -12,10 +12,10 @@
     <a href="views">
         <Text_1 />
     </a>
-    <!-- <a href="screens" style="--color-1:#d2e5ff; --color-2:#ead7fe;">
-        <Text_2 />
-    </a> -->
     <a href="exausting" style="--color-1:#ffe0e0; --color-2:#efefef;">
+        <Text_2 />
+    </a>
+    <a href="screens" style="--color-1:#d2e5ff; --color-2:#a79bb4;">
         <Text_3 />
     </a>
 </article>

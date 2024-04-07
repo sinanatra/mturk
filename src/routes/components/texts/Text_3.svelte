@@ -1,72 +1,66 @@
 <section class="desc">
-    <h1>An attempt at exhausting a dataset</h1>
+    <h1>Views of the working desk</h1>
     <h2>
-        As in the broken phone game, I repeated the process several times. I
-        uploaded the pictures received from the first task into the platform and
-        asked the new workers to describe them. I then took these descriptions
-        and asked new workers to draw a picture of them.
+        Like the first experiment, I recreated a similar approach after more
+        than a year.
     </h2>
+    <img
+        src="https://lh3.googleusercontent.com/d/17q1w5g-NpNtT2LAPYULfyvQeNt_9hLC3"
+        alt="view from Bradtford,UK"
+    />
+    <p>I asked for photos of work desks, giving this as an example:</p>
+
+    <figure>
+        <img
+            src="https://lh7-us.googleusercontent.com/oVphOAZ7pHj4qq8gx14SBRoW55DrcPPucsQ-3p4jFmYSSsYPZEivlfe106BQmdcirjJCggSr1zOLPvrR4HcPn3JRsILB4L4FKPYtPkkUJfhrCEnawb7OvLb9ApWTkcHG_IIQSX0T8OtTys8T_VcFqmOtn6tvWw"
+            alt="Mechanical Turk"
+        />
+        <figcaption>My reference image.</figcaption>
+    </figure>
+    <p>This is the first contribution I received.</p>
+    <figure>
+        <img
+            src="https://lh3.googleusercontent.com/u/0/drive-viewer/AKGpihat1-geWLTBK7rU1llv0nY-VJlng7nObjrCLeLey-TAB_1o6wuT6FXBXgFylM2PqDhR5Nyp9Vl4qWuN3KXEJsyC05zIFONShCo=w1331-h978-v0"
+            alt="Mechanical Turk"
+        />
+        <figcaption>Location: US</figcaption>
+    </figure>
 
     <p>
-        As an attempt to see how information gets lost, some drawings vary
-        considerably from the initial image.
+        Again, I asked for 100 images and collected 140 at the end, where the
+        extra ones were mainly the example image I provided. By default, Amazon
+        Mechanical Turk automatically approves submissions after a period of
+        three days. This is probably why most of the material submitted does not
+        comply with the task. Quickly completed tasks in order to collect a
+        reward that is hopefully not checked. With a dataset of a few hundred
+        images, I can check each entry one by one, and in those three days I can
+        reject entries that are 'wrong' by selecting the specific entry and
+        writing a few words in a textarea.
     </p>
-
-    <div style="display: flex; margin:10px 0">
+    <figure>
+        <img src="./rejection.png" alt="Mechanical Turk" />
+        <figcaption>Screenshot of the rejection form.</figcaption>
+    </figure>
+    <figure>
         <img
-            style="flex:1; width:50%; object-fit:cover;"
-            src=" https://lh3.googleusercontent.com/d/1modSxHstSrpPYTvdJ_qP33QyTQNio8ms"
-            alt="view from MT"
+            src="https://lh3.googleusercontent.com/d/1BKUpKvUYFcbuOopOiwEoRo2_9SOEaybF"
+            alt="Mechanical Turk"
         />
-
-        <img
-            style="flex:1; width:50%; object-fit:cover;"
-            src="https://lh3.googleusercontent.com/d/1gCjhA6x-dg4bPCI71LZt8_HJEp23pTla"
-            alt="view from MT"
-        />
-    </div>
-
-    <p>Some outputs took a romantic direction:</p>
-
-    <div style="display: flex; margin:10px 0">
-        <img
-            style="flex:1; width:50%; object-fit:cover;"
-            src="https://lh3.googleusercontent.com/d/1xeKXdQq86X6NmWXXdghCGOfLETteOctm"
-            alt="view from MT"
-        />
-        <!-- <div
-            style="height: 300px; display:flex; border: 1px dashed; margin-bottom:5px"
-        >
-            <quote style="align-self: center; text-align:center;"
-                >I see calm days, quiet place with some parked cars</quote
-            >
-        </div> -->
-        <img
-            style="flex:1; width:50%; object-fit:cover;"
-            src="https://lh3.googleusercontent.com/d/1tajUbDPP2r60-x6mq-yf4QlFaIv08pG8"
-            alt="view from MT"
-        />
-    </div>
-
+        <figcaption>
+            The sample image, or screenshots of it appear multiple times as
+            submissions.
+        </figcaption>
+    </figure>
     <p>
-        In other cases, probably being used to tagging datasets, many
-        descriptions captured only some objects in an image, and in some cases
-        the drawings became texts.
+        However, the submitted material remains with me. I can still use it and
+        the additional, but inaccurate, data I collect is free work. The review
+        process does not seem to be transparent. For all the assignments I have
+        refused so far, no worker has ever replied to me asking for an
+        explanation. I therefore wonder how many institutions exploit this
+        system, refusing payment but continuing to collect tagged data for free.
+        At the same time, if usually a third or half of the data collected is
+        junk, where does this random content end up?
     </p>
-
-    <div style="display: flex; margin:10px 0">
-        <img
-            style="flex:1; width:50%; object-fit:cover;"
-            src="https://lh3.googleusercontent.com/d/1i5keQj68k6VIyDVfwi_Pa3YyGz5djpGL"
-            alt="view from MT"
-        />
-
-        <img
-            style="flex:1; width:50%; transform:rotate(90deg)"
-            src="https://lh3.googleusercontent.com/d/1fjbRjab-uAuK0ToEtFjRlba51KAtNCWk"
-            alt="view from MT"
-        />
-    </div>
 </section>
 
 <style>
@@ -81,7 +75,6 @@
 
     img {
         width: 100%;
-        object-fit: contain;
     }
 
     @media all and (max-width: 650px) {
