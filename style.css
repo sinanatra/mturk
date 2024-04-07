@@ -42,26 +42,27 @@ h2,
 h3,
 h4 {
     font-family: "terminal-grotesque", monospace;
-    line-height: 1.5rem;
+    line-height: clamp(1rem, 1.5vw, 1.5rem);
     padding-bottom: 1rem;
 }
 
 h1 {
-    font-size: 2.5rem;
-    line-height: 2.2rem;
+    font-size: clamp(2.2rem, 2.5vw, 2.5rem);
+    line-height: clamp(2rem, 2.2vw, 2.2rem);
 }
 
 h2 {
-    font-size: 1.5rem;
+    font-size: clamp(1.25rem, 1.5vw, 1.5rem);
+    line-height: clamp(1.25rem, 1.25vw, 1.4rem);
 }
 
 h3 {
     margin-top: 1rem;
-    font-size: 1.25rem;
+    font-size: clamp(1rem, 1.25vw, 1.25rem);
 }
 
 p {
-    line-height: 1.5rem;
+    line-height: clamp(1.2rem, 1.5vw, 1.5rem);
 }
 
 quote {
