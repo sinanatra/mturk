@@ -46,7 +46,12 @@
                 <p>
                     {counter + 1} of {data.length}
                 </p>
-                <button on:click={() => (counter += 1)}>Next</button>
+                {#if counter > 0}
+                    <button on:click={() => (counter -= 1)}>Previous</button>
+                {/if}
+                {#if counter < data.length}
+                    <button on:click={() => (counter += 1)}>Next</button>
+                {/if}
             </section>
 
             <section class="columns">
