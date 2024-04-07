@@ -34,8 +34,7 @@
             src="https://lh3.googleusercontent.com/d/1xeKXdQq86X6NmWXXdghCGOfLETteOctm"
             alt="view from MT"
         />
-        <quote style="align-self: center; text-align:center;width:95%">↓</quote
-        >
+        <quote style="align-self: center; text-align:center;width:95%">↓</quote>
 
         <div
             style="height: 100px; display:flex; border: 1px dashed; margin-bottom:5px"
@@ -44,8 +43,7 @@
                 >I see calm days, quiet place with some parked cars</quote
             >
         </div>
-        <quote style="align-self: center; text-align:center;width:95%">↓</quote
-        >
+        <quote style="align-self: center; text-align:center;width:95%">↓</quote>
 
         <img
             style="object-fit:cover;"
@@ -78,7 +76,7 @@
 <style>
     section {
         width: 100%;
-        height: 100%;
+        height: calc(100% - 20px);
         max-width: 330px;
         background: var(--color-1);
         padding: 10px;

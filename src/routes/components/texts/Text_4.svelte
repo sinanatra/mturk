@@ -2,15 +2,15 @@
     <h1>Opinions of the workers</h1>
     <h2>
         I asked the workers at Amazon Mechanical Turk to share their honest
-        feelings and opinions on the platform. What do they like and detest?
-        And why do they work on Mturk.
+        feelings and opinions on the platform. What do they like and detest? And
+        why do they work on Mturk.
     </h2>
 </section>
 
 <style>
     section {
         width: 100%;
-        height: 100%;
+        height: calc(100% - 20px);
         max-width: 330px;
         background: var(--color-1);
         padding: 10px;
