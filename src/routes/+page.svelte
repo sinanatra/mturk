@@ -3,6 +3,8 @@
     import Text_1 from "@components/texts/Text_1.svelte";
     import Text_2 from "@components/texts/Text_2.svelte";
     import Text_3 from "@components/texts/Text_3.svelte";
+    import Text_4 from "@components/texts/Text_4.svelte";
+    import Outro from "@components/texts/Outro.svelte";
 </script>
 
 <article class="container">
@@ -18,6 +20,12 @@
     <a href="screens" style="--color-1:#d2e5ff; --color-2:#a79bb4;">
         <Text_3 />
     </a>
+    <a href="opinions" style="--color-1:#d5ffd2; --color-2:#a79bb4;">
+        <Text_4 />
+    </a>
+    <div style="--color-1:#c2c2c2; --color-2:#ffe0e0;">
+        <Outro />
+    </div>
 </article>
 
 <style>
@@ -27,7 +35,7 @@
     }
 
     a:hover {
-        opacity: 0.8;
+        color: red;
     }
 
     article {
@@ -35,21 +43,27 @@
         height: 100vh;
         width: 100%;
         background: gainsboro;
+        overflow: scroll;
     }
 
     .container > * {
-        display: flex;
+        min-width: 350px;
+        display: block;
+        height: 100%;
         margin: 0;
         padding: 0;
-    }
-    .container a:last-of-type {
-        box-shadow: 7px -7px 16px -8px black;
+        position: sticky;
+        left: 0;
+        top: 0;
+        z-index: 10;
+        opacity: 1;
+        overflow: scroll;
+
     }
 
-    @media all and (max-width: 650px) {
-        .container {
-            overflow: scroll;
-            display: block;
-        }
+    .container > *:last-child {
+        box-shadow: 7px -7px 16px -8px black;
+        margin-right: 40vw;
+        background: red !important;
     }
 </style>

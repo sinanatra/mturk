@@ -1,15 +1,22 @@
 <section class="desc">
     <h1>Views of the working desk</h1>
     <h2>
-        Like the first experiment, I recreated a similar approach after more
-        than a year.
+        I asked the workers at Amazon Mechanical Turk to send me a photo of
+        their working setup. Here are the photos I received and the city they
+        were sent from.
     </h2>
-    <img
-        src="https://lh3.googleusercontent.com/d/17q1w5g-NpNtT2LAPYULfyvQeNt_9hLC3"
-        alt="view from Bradtford,UK"
-    />
-    <p>I asked for photos of work desks, giving this as an example:</p>
-
+    <figure>
+        <img
+            src="https://lh3.googleusercontent.com/d/17q1w5g-NpNtT2LAPYULfyvQeNt_9hLC3"
+            alt="Mechanical Turk"
+        />
+        <figcaption>Kozhikode, IN</figcaption>
+    </figure>
+    <p>
+        After more than one year from the first experiment, I logged into the
+        platform this time asking for photos of work desks, giving this as an
+        example:
+    </p>
     <figure>
         <img
             src="https://lh7-us.googleusercontent.com/oVphOAZ7pHj4qq8gx14SBRoW55DrcPPucsQ-3p4jFmYSSsYPZEivlfe106BQmdcirjJCggSr1zOLPvrR4HcPn3JRsILB4L4FKPYtPkkUJfhrCEnawb7OvLb9ApWTkcHG_IIQSX0T8OtTys8T_VcFqmOtn6tvWw"
@@ -66,6 +73,7 @@
 <style>
     section {
         width: 100%;
+        height: 100%;
         max-width: 330px;
         background: var(--color-1);
         padding: 10px;

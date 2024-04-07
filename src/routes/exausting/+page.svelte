@@ -32,10 +32,6 @@
     let counter = 0;
     const incr = () => (counter += 1 % data.length);
 
-    $: {
-        setInterval(incr, 3000);
-    }
-
     $: datum = data[counter];
 </script>
 
@@ -44,36 +40,46 @@
 {:else}
     <article class="container" style="--color-1:#ffe0e0; --color-2:#f2f2f2;">
         <Text_2 />
-        <!-- {counter} of {data.length} -->
 
-        <article>
-            <section>
-                <div>
-                    <img src={datum.task_1_url} alt="" />
-                </div>
-                <p>{datum.city_1}</p>
+        <div class="inner-container">
+            <section class="counter">
+                <p>
+                    {counter + 1} of {data.length}
+                </p>
+                <button on:click={() => (counter += 1)}>Next</button>
             </section>
-            <section>
-                <div>
-                    <p style="color:grey">What do you see in the picture?</p>
-                    <p>{datum.task_2}</p>
-                    {#if datum.task_2_diff}
-                        <hr />
+
+            <section class="columns">
+                <section class="task">
+                    <div>
+                        <img src={datum.task_1_url} alt="" />
+                    </div>
+                    <p>{datum.city_1}</p>
+                </section>
+                <section class="task">
+                    <div>
                         <p style="color:grey">
-                            How does it differ to your daily life?
+                            What do you see in the picture?
                         </p>
-                        <p>{datum.task_2_diff}</p>
-                    {/if}
-                </div>
-                <p>{datum.city_2}</p>
+                        <p>{datum.task_2}</p>
+                        {#if datum.task_2_diff}
+                            <hr />
+                            <p style="color:grey">
+                                How does it differ to your daily life?
+                            </p>
+                            <p>{datum.task_2_diff}</p>
+                        {/if}
+                    </div>
+                    <p>{datum.city_2}</p>
+                </section>
+                <section class="task">
+                    <div>
+                        <img src={datum.task_3} alt="" />
+                    </div>
+                    <p>{datum.city_3}</p>
+                </section>
             </section>
-            <section>
-                <div>
-                    <img src={datum.task_3} alt="" />
-                </div>
-                <p>{datum.city_3}</p>
-            </section>
-        </article>
+        </div>
     </article>
 {/if}
 
@@ -84,16 +90,24 @@
         background-color: var(--color-2);
         overflow: hidden;
     }
+
+    .columns {
+        display: flex;
+        height: 100vh;
+        width: calc(100vw - 330px);
+        overflow: scroll;
+    }
+
     section {
         font-family: "terminal-grotesque", sans-serif;
         padding: 5px;
         flex: 1;
-        max-width: 430px;
-        border-right: 1px dashed var(--bg);
     }
-    div {
-        width: 430px;
+
+    .task {
+        min-width: 430px;
         min-height: 500px;
+        border-right: 1px dashed var(--bg);
     }
 
     img {
@@ -102,10 +116,28 @@
         object-position: top left;
     }
 
+    .counter {
+        font-family: "terminal-grotesque", sans-serif;
+        font-size: 1.45rem;
+        display: block;
+        text-align: center;
+        width: 100%;
+        padding-bottom: 5px;
+        border-bottom: 1px dashed var(--bg);
+        cursor: pointer;
+    }
+    button {
+        cursor: pointer;
+    }
+
     @media all and (max-width: 650px) {
         .container {
             overflow: scroll;
             display: block;
+        }
+
+        .columns {
+            width: 100vw;
         }
     }
 </style>

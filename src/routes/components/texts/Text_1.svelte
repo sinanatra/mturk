@@ -25,7 +25,7 @@
     common approaches suggested on Reddit. A Google form allowed participants to
     upload a photo, write their city of origin and their Amazon Mechanical Turk
     ID. This way, after completing the questionnaire, they could receive a
-    password to enter into AMT to get the reward. With the first experiment, I
+    password to enter into MTurk to get the reward. With the first experiment, I
     collected 203 pictures. The initial goal was 100. More than 50% of the
     images did not comply with the request. In some cases these were broken
     files, in others desktop screenshots, photos of animals or stock images.
@@ -47,6 +47,7 @@
 <style>
     section {
         width: 100%;
+        height: 100%;
         max-width: 330px;
         background: var(--color-1);
         padding: 10px;
