@@ -26,7 +26,6 @@
     article {
         display: flex;
         height: 100vh;
-        overflow: hidden;
     }
 
     @media all and (max-width: 650px) {

@@ -1,16 +1,22 @@
 <script>
     import { selected } from "../lib/stores/selected";
+    import { onMount } from "svelte";
+
     export let data;
     let selectedElement;
+    let parentElement;
 
     let scroll = true;
 
+    onMount(() => {
+        parentElement = selectedElement.parentElement;
+    });
+
     $: {
-        if (scroll && $selected == data["img"] && selectedElement) {
-            selectedElement.scrollIntoView({
+        if (scroll && $selected == data["img"] && parentElement) {
+            parentElement.scrollTo({
+                top: selectedElement.offsetTop,
                 behavior: "smooth",
-                block: "center",
-                inline: "nearest",
             });
         }
     }
@@ -47,7 +53,7 @@
         object-fit: cover;
         filter: grayscale(100%) opacity(0.5);
     }
-    
+
     a {
         line-height: 0;
         display: block;
@@ -55,7 +61,7 @@
 
     h4 {
         padding: 0px;
-        padding-bottom: 8px;
+        padding-bottom: 4px;
     }
 
     div {
