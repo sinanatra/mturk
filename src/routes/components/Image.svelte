@@ -47,6 +47,16 @@
         object-fit: cover;
         filter: grayscale(100%) opacity(0.5);
     }
+    
+    a {
+        line-height: 0;
+        display: block;
+    }
+
+    h4 {
+        padding: 0px;
+        padding-bottom: 8px;
+    }
 
     div {
         width: 25%;

@@ -96,7 +96,7 @@
         glimpse of their private life, their view close to their desk, their
         working station. At the limit of ethics and labour exploitation I asked
         myself whether this is an acceptable approach to use in research and in
-        general, if employing randomic&nbsp;workers around the world is the
+        general, if employing random&nbsp;workers around the world is the
         ideal practice to shape future artificial intelligences.
     </p>
     <p>
