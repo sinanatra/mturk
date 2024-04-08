@@ -60,7 +60,7 @@
     </figure>
     <p>
         However, the submitted material remains with me. I can still use it and
-        the additional, but inaccurate, data I collect is free work. The review
+        the additional, but inaccurate, data I collect is free labour. The review
         process does not seem to be transparent. For all the assignments I have
         refused so far, no worker has ever replied to me asking for an
         explanation. I therefore wonder how many institutions exploit this
