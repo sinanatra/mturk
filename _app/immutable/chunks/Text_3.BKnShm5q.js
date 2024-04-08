@@ -1,4 +1,4 @@
-import{s as r,n as a}from"./scheduler.DGlNlUkI.js";import{S as n,i as c,g as h,h as l,x as g,k as p,a as f,f as u}from"./index.aSnQmX6g.js";function m(s){let e,i=`<h1>Views of the working desk</h1> <h2>I asked the workers at Amazon Mechanical Turk to send me a photo of
+import{s as r,n as a}from"./scheduler.DGlNlUkI.js";import{S as n,i as c,g as l,h,x as g,k as p,a as f,f as u}from"./index.aSnQmX6g.js";function m(s){let e,i=`<h1>Views of the working desk</h1> <h2>I asked the workers at Amazon Mechanical Turk to send me a photo of
         their working setup. Here are the photos I received and the city they
         were sent from.</h2> <figure><img src="https://lh3.googleusercontent.com/d/17q1w5g-NpNtT2LAPYULfyvQeNt_9hLC3" alt="Mechanical Turk" class="svelte-1gua0zx"/> <figcaption>Kozhikode, IN</figcaption></figure> <p>After more than one year from the first experiment, I logged into the
         platform this time asking for photos of work desks, giving this as an
@@ -12,10 +12,10 @@ import{s as r,n as a}from"./scheduler.DGlNlUkI.js";import{S as n,i as c,g as h,h
         reject entries that are &#39;wrong&#39; by selecting the specific entry and
         writing a few words in a textarea.</p> <figure><img src="./rejection.png" alt="Mechanical Turk" class="svelte-1gua0zx"/> <figcaption>Screenshot of the rejection form.</figcaption></figure> <figure><img src="https://lh3.googleusercontent.com/d/1BKUpKvUYFcbuOopOiwEoRo2_9SOEaybF" alt="Mechanical Turk" class="svelte-1gua0zx"/> <figcaption>The sample image, or screenshots of it appear multiple times as
             submissions.</figcaption></figure> <p>However, the submitted material remains with me. I can still use it and
-        the additional, but inaccurate, data I collect is free work. The review
+        the additional, but inaccurate, data I collect is free labour. The review
         process does not seem to be transparent. For all the assignments I have
         refused so far, no worker has ever replied to me asking for an
         explanation. I therefore wonder how many institutions exploit this
         system, refusing payment but continuing to collect tagged data for free.
         At the same time, if usually a third or half of the data collected is
-        junk, where does this random content end up?</p>`;return{c(){e=h("section"),e.innerHTML=i,this.h()},l(t){e=l(t,"SECTION",{class:!0,"data-svelte-h":!0}),g(e)!=="svelte-14n964b"&&(e.innerHTML=i),this.h()},h(){p(e,"class","desc svelte-1gua0zx")},m(t,o){f(t,e,o)},p:a,i:a,o:a,d(t){t&&u(e)}}}class k extends n{constructor(e){super(),c(this,e,null,m,r,{})}}export{k as T};
+        junk, where does this random content end up?</p>`;return{c(){e=l("section"),e.innerHTML=i,this.h()},l(t){e=h(t,"SECTION",{class:!0,"data-svelte-h":!0}),g(e)!=="svelte-12twtad"&&(e.innerHTML=i),this.h()},h(){p(e,"class","desc svelte-1gua0zx")},m(t,o){f(t,e,o)},p:a,i:a,o:a,d(t){t&&u(e)}}}class y extends n{constructor(e){super(),c(this,e,null,m,r,{})}}export{y as T};
