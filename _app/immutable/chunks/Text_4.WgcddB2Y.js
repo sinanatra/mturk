@@ -1,3 +1,0 @@
-import{s as r,n as s}from"./scheduler.DGlNlUkI.js";import{S as i,i as h,g as l,h as c,x as d,k as m,a as u,f}from"./index.aSnQmX6g.js";function p(n){let e,a=`<h1>Opinions of the workers</h1> <h2>I asked the workers at Amazon Mechanical Turk to share their honest
-        feelings and opinions on the platform. What do they like and detest? And
-        why do they work on Mturk.</h2>`;return{c(){e=l("section"),e.innerHTML=a,this.h()},l(t){e=c(t,"SECTION",{class:!0,"data-svelte-h":!0}),d(e)!=="svelte-1lp22iu"&&(e.innerHTML=a),this.h()},h(){m(e,"class","desc svelte-1gua0zx")},m(t,o){u(t,e,o)},p:s,i:s,o:s,d(t){t&&f(e)}}}class x extends i{constructor(e){super(),h(this,e,null,p,r,{})}}export{x as T};
