@@ -37,6 +37,8 @@
             <g fill="var(--color-1)">
                 {#each data as d}
                     <circle
+                        role="tab"
+                        tabindex="0"
                         r="3"
                         stroke="black"
                         transform="translate({projection([
@@ -44,9 +46,11 @@
                             d.Latitude,
                         ])})"
                         on:mouseover={() => {
-                            $selected = d["img"];
+                            $selected = d?.["img"] || d?.["id"];
                         }}
-                        class:selected={$selected == d["img"]}
+                        on:focus
+                        class:selected={$selected == d?.["img"] ||
+                            $selected == d?.["id"]}
                     />
                 {/each}
             </g>

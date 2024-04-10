@@ -8,22 +8,22 @@
 </script>
 
 <article class="container">
-    <div style="--color-1:#8d9a8f; --color-2:#ffe0e0;">
+    <div style="--color-1:#8d9a8f">
         <Intro />
     </div>
     <a href="views">
         <Text_1 />
     </a>
-    <a href="exausting" style="--color-1:#ffe0e0; --color-2:#efefef;">
+    <a href="exausting" style="--color-1:#ffe0e0">
         <Text_2 />
     </a>
-    <a href="screens" style="--color-1:#d2e5ff; --color-2:#a79bb4;">
+    <a href="screens" style="--color-1:#acb2c8">
         <Text_3 />
     </a>
-    <a href="opinions" style="--color-1:#d5ffd2; --color-2:#a79bb4;">
+    <a href="opinions" style="--color-1:#aec8ac">
         <Text_4 />
     </a>
-    <div style="--color-1:#c2c2c2; --color-2:#ffe0e0;">
+    <div style="--color-1:#c2c2c2">
         <Outro />
     </div>
 </article>
@@ -58,7 +58,6 @@
         z-index: 10;
         opacity: 1;
         overflow: scroll;
-
     }
 
     .container > *:last-child {

@@ -15,7 +15,7 @@
 {#if data.length == 0}
     <article>Loading...</article>
 {:else}
-    <article class="container" style="--color-1:#d2e5ff; --color-2:#a79bb4;">
+    <article class="container" style="--color-1:#acb2c8; --color-2:#a79bb4;">
         <Text_3 />
         <Map {data} />
         <Gallery {data} />
