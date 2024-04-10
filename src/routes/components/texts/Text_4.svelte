@@ -1,30 +1,46 @@
 <section class="desc">
     <h1>Opinions of the workers</h1>
     <h2>
-        I asked the workers at Amazon Mechanical Turk to share their honest
-        feelings and opinions on the platform. What do they like and detest? And
-        why do they work on Mturk.
+        What do you like and detest about working for Amazon Mechanical Turk?
+        Why do you do it? Please share your honest feelings and opinions on the
+        platform.
     </h2>
     <p>
-        This time I repeated the task twice, the first time it was open to all
-        workers on the platform, and the second time only to Mechanical Turk
+        This time I repeated the task twice, by asking what are the feelings and
+        opinion of the workers on the platform. The first time it was open to
+        all workers on the platform, and the second time only to Mechanical Turk
         "Masters."
     </p>
-    <quote>
-        “Mechanical Turk has built technology which analyzes Worker performance,
-        identifies high performing Workers, and monitors their performance over
-        time. Workers who have demonstrated excellence across a wide range of
-        tasks are awarded the Masters Qualification. Masters must continue to
-        pass our statistical monitoring to retain the Mechanical Turk Masters
-        Qualification.”
-    </quote>
+
+    <figure>
+        <img src="masters.png" alt="Mechanical Turk" />
+        <figcaption>
+            “Mechanical Turk has built technology which analyzes Worker
+            performance, identifies high performing Workers, and monitors their
+            performance over time. Workers who have demonstrated excellence
+            across a wide range of tasks are awarded the Masters Qualification.
+            Masters must continue to pass our statistical monitoring to retain
+            the Mechanical Turk Masters Qualification.”
+        </figcaption>
+    </figure>
+
     <p>
         The hiring of Masters involves a different fee charged by Mturks, which
-        is $0.005 compared to $0.040. In less than an hour, the first part of
-        the new task was completed. In contrast, after 3 days I closed the task
-        for "masters" only with only 17 submissions. The quality of these
-        entries is definitely higher, with responses such as:
+        is $0.005 compared to $0.040.
+        <figure>
+            <img src="fees.png" alt="Mechanical Turk" />
+            <figcaption>
+                A screenshot showing the fees of the plaftorm.
+            </figcaption>
+        </figure>
     </p>
+    <p>
+        In less than an hour, the first part of the new task was completed. In
+        contrast, after 3 days I closed the task for "masters" only with only 17
+        submissions. The quality of these entries is definitely higher, with
+        responses such as:
+    </p>
+
     <quote>
         “I really liked AMT years ago when I first started working for them.
         However, over the last year or so, this platform has really gone
@@ -40,6 +56,7 @@
         MTURKOPTICON), but they would not reverse the rejections. That was so
         unfair when it was their fault.”.
     </quote>
+
     <p>
         However, it is clear that there is a lack of such workers. In addition,
         as already commented with the previous exercise and description above,
