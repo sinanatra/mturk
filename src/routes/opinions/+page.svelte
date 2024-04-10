@@ -1,14 +1,13 @@
 <script>
     import Text_4 from "@components/texts/Text_4.svelte";
-    import Map from "@components/Map.svelte";
-    import Gallery from "@components/Gallery.svelte";
+    import TextViz from "@components/TextViz.svelte";
 
-    import * as d3 from "d3";
+   import { csv } from "d3";
     import { onMount } from "svelte";
 
     let data = [];
     onMount(async (d) => {
-        data = await d3.tsv("desktop_out.tsv");
+        data = await csv("opinions.csv");
     });
 </script>
 
@@ -17,8 +16,7 @@
 {:else}
     <article class="container" style="--color-1:#d5ffd2; --color-2:#a79bb4;">
         <Text_4 />
-        <Map {data} />
-        <Gallery {data} />
+        <TextViz {data} />
     </article>
 {/if}
 

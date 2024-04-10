@@ -2,13 +2,13 @@
     import Text_1 from "@components/texts/Text_1.svelte";
     import Map from "@components/Map.svelte";
     import Gallery from "@components/Gallery.svelte";
-
-    import * as d3 from "d3";
     import { onMount } from "svelte";
+
+    import { tsv } from "d3";
 
     let data = [];
     onMount(async (d) => {
-        data = await d3.tsv("windows.tsv");
+        data = await tsv("windows.tsv");
     });
 </script>
 

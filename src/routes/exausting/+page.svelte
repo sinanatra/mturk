@@ -3,12 +3,12 @@
     import Map from "@components/Map.svelte";
     import Gallery from "@components/Gallery.svelte";
 
-    import * as d3 from "d3";
+   import { csv } from "d3";
     import { onMount } from "svelte";
 
     let data = [];
     onMount(async (d) => {
-        data = await d3.csv("exausting.csv");
+        data = await csv("exausting.csv");
 
         data = data
             .filter((d) => d.task_1)
