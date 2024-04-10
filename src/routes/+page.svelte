@@ -34,8 +34,8 @@
         text-decoration: none;
     }
 
-    a:hover {
-        color: red;
+    :global(.container > a:hover > *) {
+        box-shadow: inset 0px 0px 16px 0px black;
     }
 
     article {
