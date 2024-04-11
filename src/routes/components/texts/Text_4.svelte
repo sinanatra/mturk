@@ -59,6 +59,29 @@
         several workers have complained about the unexplained rejections that
         often occur in the platform.
     </p>
+    <quote>
+        Lacks any ability to truly hold requesters accountable. For the pay they
+        offer, to unreasonable rejections. Amazon plays no role in defending the
+        worker and leaves it up to us to just deal with it. Can try sending
+        messages to requesters but often ignored. That includes wasting an hour
+        on work to have it crash due to the requesters faulty software.
+    </quote>
+
+    <quote>
+        I really liked AMT years ago when I first started working for them.
+        However, over the last year or so, this platform has really gone
+        downhill. The hits are not worth my time. Sometimes they only pay a
+        penny or so for work that is over five minutes long! Also, the rejecters
+        seem to randomly reject work. I recently spent about 8 minutes
+        explaining my response to a chatbot conversation, only to get rejected.
+        I have no idea what they wanted. I have a master's, so I can get some
+        good hits. However, these unfair rejections are really starting to add
+        up, and I am worried I will lose my master's status once my rejection
+        rate goes below 99%. What really hurt my rate was a "mass rejection" of
+        10 hits. It turns out that there was a glitch (I read it on
+        MTURKOPTICON), but they would not reverse the rejections. That was so
+        unfair when it was their fault.
+    </quote>
 </section>
 
 <style>
