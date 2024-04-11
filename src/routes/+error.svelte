@@ -1,6 +1,9 @@
+<script>
+    import { page } from "$app/stores";
+</script>
+
 <article>
-    <h1>404</h1>
-    <p>Not Found.</p>
+    <h1>{$page.error.message}</h1>
 </article>
 
 <style>
