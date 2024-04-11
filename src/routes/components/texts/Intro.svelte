@@ -24,9 +24,12 @@
         games. Of course, the robot was not using any artificial intelligence algorithms
         back then. The secret of the Mechanical Turk machine was a human operator,
         hidden inside the machine,who was the real intelligence.
-        <a href="https://doi.org/10.1145/1869086.1869094" target="_blank"
-            >See link</a
-        >.
+        <sup>
+            <a href="https://doi.org/10.1145/1869086.1869094" target="_blank"
+                >1</a
+            ></sup
+        >
+
         <br /><br />
 
         Today, Amazon Mechanical Turk is a marketplace for tasks that cannot be
@@ -131,10 +134,13 @@
         >“Information has always had geography. It is from somewhere; about
         somewhere; it evolves and is transformed somewhere; it is mediaxted by
         networks, infrastructures, and technologies: all of which exist in
-        physical, material places”. <a
-            href="https://rgs-ibg.onlinelibrary.wiley.com/doi/full/10.1002/geo2.8"
-            target="_blank">See link</a
-        >.
+        physical, material places”.
+        <sup>
+            <a
+                href="https://rgs-ibg.onlinelibrary.wiley.com/doi/full/10.1002/geo2.8"
+                target="_blank">2</a
+            ></sup
+        >
     </quote>
     <p>
         Datasets are no exception. The information they carry is a reflection of
@@ -160,9 +166,13 @@
         overflow: scroll;
     }
 
+    sup {
+        line-height: 0;
+    }
+
     a {
         text-decoration: underline;
-        color: yellow;
+        color: black;
     }
 
     img {
