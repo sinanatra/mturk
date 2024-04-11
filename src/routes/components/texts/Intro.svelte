@@ -23,7 +23,10 @@
         “automatic” chess-playing machine, which was handily beating humans in chess
         games. Of course, the robot was not using any artificial intelligence algorithms
         back then. The secret of the Mechanical Turk machine was a human operator,
-        hidden inside the machine, who was the real intelligence (Ipeirotis, 2010).
+        hidden inside the machine,who was the real intelligence.
+        <a href="https://doi.org/10.1145/1869086.1869094" target="_blank"
+            >See link</a
+        >.
         <br /><br />
 
         Today, Amazon Mechanical Turk is a marketplace for tasks that cannot be
@@ -96,8 +99,8 @@
         glimpse of their private life, their view close to their desk, their
         working station. At the limit of ethics and labour exploitation I asked
         myself whether this is an acceptable approach to use in research and in
-        general, if employing random&nbsp;workers around the world is the
-        ideal practice to shape future artificial intelligences.
+        general, if employing random&nbsp;workers around the world is the ideal
+        practice to shape future artificial intelligences.
     </p>
     <p>
         While both tasks were performed, the material collected varied
@@ -128,7 +131,10 @@
         >“Information has always had geography. It is from somewhere; about
         somewhere; it evolves and is transformed somewhere; it is mediaxted by
         networks, infrastructures, and technologies: all of which exist in
-        physical, material places” (Graham et al., 2015).
+        physical, material places”. <a
+            href="https://rgs-ibg.onlinelibrary.wiley.com/doi/full/10.1002/geo2.8"
+            target="_blank">See link</a
+        >.
     </quote>
     <p>
         Datasets are no exception. The information they carry is a reflection of
@@ -142,16 +148,6 @@
         data is annotated and created.
         <br />
     </p>
-    <h3>Bibliographic reference</h3>
-    <p>
-        Ipeirotis, P. G. (2010). Analyzing the Amazon Mechanical Turk
-        marketplace. XRDS: Crossroads, The ACM Magazine for Students, 17(2),
-        16–21. https://doi.org/10.1145/1869086.1869094
-        <br /><br />
-        Graham et al., 2015, Towards a study of information geographies: [im]mutable
-        augmentations and a mapping of the geographies of information. Retrieved
-        17 January 2019, from https://rgs-ibg.onlinelibrary.wiley.com/doi/full/10.1002/geo2.8.
-    </p>
 </section>
 
 <style>
@@ -162,6 +158,11 @@
         padding: 10px;
         word-break: break-word;
         overflow: scroll;
+    }
+
+    a {
+        text-decoration: underline;
+        color: yellow;
     }
 
     img {
