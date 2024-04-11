@@ -1,6 +1,5 @@
 <script>
     import TextItem from "@components/TextItem.svelte";
-    import { sort } from "d3";
     export let data;
 </script>
 

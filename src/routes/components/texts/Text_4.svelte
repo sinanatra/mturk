@@ -42,19 +42,15 @@
     </p>
 
     <quote>
-        “I really liked AMT years ago when I first started working for them.
-        However, over the last year or so, this platform has really gone
-        downhill. The hits are not worth my time. Sometimes they only pay a
-        penny or so for work that is over five minutes long! Also, the rejecters
-        seem to randomly reject work. I recently spent about 8 minutes
-        explaining my response to a chatbot conversation, only to get rejected.
-        I have no idea what they wanted. I have a master's, so I can get some
-        good hits. However, these unfair rejections are really starting to add
-        up, and I am worried I will lose my master's status once my rejection
-        rate goes below 99%. What really hurt my rate was a "mass rejection" of
-        10 hits. It turns out that there was a glitch (I read it on
-        MTURKOPTICON), but they would not reverse the rejections. That was so
-        unfair when it was their fault.”.
+        “On one hand, mturk changed my life. I have C-PTSD and find public
+        places too noisy and stressful. I was on the verge of becoming
+        completely homeless but went back to working on here (I previously
+        worked a lot on here when in college but then took a break). It now
+        gives me a chance to earn enough money to survive. On the other hand,
+        it's a terrible way to make a living. It's not stable and can be
+        stressful. I have found that working on other platforms and bouncing
+        back and forth between them helps so there isn't as much down time
+        waiting for work”.
     </quote>
 
     <p>
