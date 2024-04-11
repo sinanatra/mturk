@@ -3,7 +3,7 @@
     import Map from "@components/Map.svelte";
     import Gallery from "@components/Gallery.svelte";
 
-   import { csv } from "d3";
+    import { csv } from "d3";
     import { onMount } from "svelte";
 
     let data = [];
@@ -56,6 +56,9 @@
 
             <section class="columns">
                 <section class="task">
+                    <h4 style="color:grey">
+                        What can you see from outside of the windows?
+                    </h4>
                     <div>
                         <img src={datum.task_1_url} alt="" />
                     </div>
@@ -63,21 +66,24 @@
                 </section>
                 <section class="task">
                     <div>
-                        <p style="color:grey">
+                        <h4 style="color:grey">
                             What do you see in the picture?
-                        </p>
+                        </h4>
                         <p>{datum.task_2}</p>
                         {#if datum.task_2_diff}
                             <hr />
-                            <p style="color:grey">
+                            <h4 style="color:grey">
                                 How does it differ to your daily life?
-                            </p>
+                            </h4>
                             <p>{datum.task_2_diff}</p>
                         {/if}
                     </div>
                     <p>{datum.city_2}</p>
                 </section>
                 <section class="task">
+                    <h4 style="color:grey">
+                        Make a drawing of the written text on a piece of paper.
+                    </h4>
                     <div>
                         <img src={datum.task_3} alt="" />
                     </div>
@@ -110,9 +116,13 @@
     }
 
     .task {
-        min-width: 430px;
+        min-width: 330px;
         min-height: 500px;
         border-right: 1px dashed var(--bg);
+    }
+
+    .task > div {
+        min-height: 500px;
     }
 
     img {
