@@ -13,7 +13,7 @@
     });
 
     $: {
-        if (scroll === true && $selected == data.id) {
+        if (selectedElement && scroll === true && $selected == data.id) {
             selectedElement.parentElement.scrollTo({
                 top: selectedElement.offsetTop,
                 behavior: "smooth",
