@@ -56,11 +56,13 @@
 
             <section class="columns">
                 <section class="task">
-                    <h4 style="color:grey">
-                        What can you see from outside of the windows?
-                    </h4>
                     <div>
-                        <img src={datum.task_1_url} alt="" />
+                        <h4 style="color:grey">
+                            What can you see from outside of the windows?
+                        </h4>
+                        <div>
+                            <img src={datum.task_1_url} alt="" />
+                        </div>
                     </div>
                     <p>{datum.city_1}</p>
                 </section>
@@ -81,11 +83,14 @@
                     <p>{datum.city_2}</p>
                 </section>
                 <section class="task">
-                    <h4 style="color:grey">
-                        Make a drawing of the written text on a piece of paper.
-                    </h4>
                     <div>
-                        <img src={datum.task_3} alt="" />
+                        <h4 style="color:grey">
+                            Make a drawing of the written text on a piece of
+                            paper.
+                        </h4>
+                        <div>
+                            <img src={datum.task_3} alt="" />
+                        </div>
                     </div>
                     <p>{datum.city_3}</p>
                 </section>
@@ -122,7 +127,7 @@
     }
 
     .task > div {
-        min-height: 500px;
+        min-height: 600px;
     }
 
     img {
