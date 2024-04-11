@@ -1,4 +1,4 @@
-import{s as i,n as a}from"./scheduler.DlkIgXc2.js";import{S as r,i as h,g as l,h as c,x as u,k as f,a as d,f as p}from"./index.hfIOWo0e.js";function m(s){let e,o=`<h1>Opinions of the workers</h1> <h2>What do you like and detest about working for Amazon Mechanical Turk?
+import{s as n,n as o}from"./scheduler.DlkIgXc2.js";import{S as i,i as h,g as l,h as c,x as u,k as d,a as f,f as m}from"./index.hfIOWo0e.js";function p(s){let e,a=`<h1>Opinions of the workers</h1> <h2>What do you like and detest about working for Amazon Mechanical Turk?
         Why do you do it? Please share your honest feelings and opinions on the
         platform.</h2> <p>This time I repeated the task twice, by asking what are the feelings and
         opinion of the workers on the platform. The first time it was open to
@@ -24,4 +24,20 @@ import{s as i,n as a}from"./scheduler.DlkIgXc2.js";import{S as r,i as h,g as l,h
         waiting for work”.</quote> <p>However, it is clear that there is a lack of such workers. In addition,
         as already commented with the previous exercise and description above,
         several workers have complained about the unexplained rejections that
-        often occur in the platform.</p>`;return{c(){e=l("section"),e.innerHTML=o,this.h()},l(t){e=c(t,"SECTION",{class:!0,"data-svelte-h":!0}),u(e)!=="svelte-17zkj9p"&&(e.innerHTML=o),this.h()},h(){f(e,"class","desc svelte-1gua0zx")},m(t,n){d(t,e,n)},p:a,i:a,o:a,d(t){t&&p(e)}}}class w extends r{constructor(e){super(),h(this,e,null,m,i,{})}}export{w as T};
+        often occur in the platform.</p> <quote>Lacks any ability to truly hold requesters accountable. For the pay they
+        offer, to unreasonable rejections. Amazon plays no role in defending the
+        worker and leaves it up to us to just deal with it. Can try sending
+        messages to requesters but often ignored. That includes wasting an hour
+        on work to have it crash due to the requesters faulty software.</quote> <quote>I really liked AMT years ago when I first started working for them.
+        However, over the last year or so, this platform has really gone
+        downhill. The hits are not worth my time. Sometimes they only pay a
+        penny or so for work that is over five minutes long! Also, the rejecters
+        seem to randomly reject work. I recently spent about 8 minutes
+        explaining my response to a chatbot conversation, only to get rejected.
+        I have no idea what they wanted. I have a master&#39;s, so I can get some
+        good hits. However, these unfair rejections are really starting to add
+        up, and I am worried I will lose my master&#39;s status once my rejection
+        rate goes below 99%. What really hurt my rate was a &quot;mass rejection&quot; of
+        10 hits. It turns out that there was a glitch (I read it on
+        MTURKOPTICON), but they would not reverse the rejections. That was so
+        unfair when it was their fault.</quote>`;return{c(){e=l("section"),e.innerHTML=a,this.h()},l(t){e=c(t,"SECTION",{class:!0,"data-svelte-h":!0}),u(e)!=="svelte-l5jz9i"&&(e.innerHTML=a),this.h()},h(){d(e,"class","desc svelte-1gua0zx")},m(t,r){f(t,e,r)},p:o,i:o,o,d(t){t&&m(e)}}}class y extends i{constructor(e){super(),h(this,e,null,p,n,{})}}export{y as T};
