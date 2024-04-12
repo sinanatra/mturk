@@ -1,4 +1,4 @@
-import{s as i,n as s}from"./scheduler.DlkIgXc2.js";import{S as r,i as n,g as c,h as d,x as h,k as m,a as p,f as g}from"./index.hfIOWo0e.js";function f(l){let e,o=`<h1>An attempt at exhausting a dataset</h1> <h2>As in the broken phone game, I repeated the process several times. I
+import{s as i,n as s}from"./scheduler.cSAxCcgE.js";import{S as r,i as n,f as c,k as d,p as h,q as m,b as p,d as g}from"./index.CmCBegWC.js";function f(l){let e,o=`<h1>An attempt at exhausting a dataset</h1> <h2>As in the broken phone game, I repeated the process several times. I
         uploaded the pictures received from the first task into the platform and
         asked the new workers to describe them. I then took these descriptions
         and asked new workers to draw a picture of them.</h2> <p>As an attempt to see how information gets lost, some drawings vary

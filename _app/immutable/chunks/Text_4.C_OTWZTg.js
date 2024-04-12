@@ -1,4 +1,4 @@
-import{s as n,n as o}from"./scheduler.DlkIgXc2.js";import{S as i,i as h,g as l,h as c,x as u,k as d,a as f,f as m}from"./index.hfIOWo0e.js";function p(s){let e,a=`<h1>Opinions of the workers</h1> <h2>What do you like and detest about working for Amazon Mechanical Turk?
+import{s as n,n as o}from"./scheduler.cSAxCcgE.js";import{S as i,i as h,f as l,k as c,p as u,q as d,b as f,d as m}from"./index.CmCBegWC.js";function p(s){let e,a=`<h1>Opinions of the workers</h1> <h2>What do you like and detest about working for Amazon Mechanical Turk?
         Why do you do it? Please share your honest feelings and opinions on the
         platform.</h2> <p>This time I repeated the task twice, by asking what are the feelings and
         opinion of the workers on the platform. The first time it was open to
