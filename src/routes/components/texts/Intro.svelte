@@ -31,15 +31,13 @@
         >
 
         <br /><br />
-
-        Today, Amazon Mechanical Turk is a marketplace for tasks that cannot be
-        easily automated, which are then fulfilled by human users. Such tasks,
-        mainly involve the creation of datasets: collections of data that act as
-        pedagogical learning material when dealing with Artificial
-        intelligences, most specifically, machine learning systems. Current
-        Artificial intelligences are able to "learn” to execute such tasks by
-        simply repeatedly analysing large numbers of labelled examples and
-        counterexamples.
+        Today, Amazon Mechanical Turk is a marketplace for tasks that cannot be easily
+        automated, which are then fulfilled by human users. Such tasks, mainly involve
+        the creation of datasets: collections of data that act as pedagogical learning
+        material when dealing with Artificial intelligences, most specifically, machine
+        learning systems. Current Artificial intelligences are in fact able to "learn”
+        to execute such tasks by simply repeatedly analysing large numbers of labelled
+        examples and counterexamples.
         <br />
         Such data is analysed and processed by workers on platforms like Mechanical
         Turks. But little is known about these individuals that complete these tasks.
@@ -96,13 +94,13 @@
     </p>
 
     <p>
-        As organisations use Mechanical Turk to create datasets, in this
-        experiment a more private dataset has been created. Following the logic
+        As organisations use Mechanical Turk to create datasets, in these
+        experiments more private dataseta have been created. Following the logic
         of the platform, for a small fee workers have been asked to show a
         glimpse of their private life, their view close to their desk, their
         working station. At the limit of ethics and labour exploitation I asked
         myself whether this is an acceptable approach to use in research and in
-        general, if employing random&nbsp;workers around the world is the ideal
+        general, if employing random workers around the world is the ideal
         practice to shape future artificial intelligences.
     </p>
     <p>
@@ -148,9 +146,9 @@
         <br />
         Although, in the past years, there has been a growing attention of bias studies
         in the field of machine learning, there is still a general disinterest for
-        the ones carried by the hidden geographies of datasets. Therefore there is
-        a central focus on the geographies of Amazon Mechanical Turk. Not necessarly
-        on the demographics of its workers, but rather on the different places where
+        the ones carried by the hidden geographies of datasets. Consequentyl, a central
+        focus is on the geographies of Amazon Mechanical Turk. Not necessarly on
+        the demographics of its workers, but rather on the different places where
         data is annotated and created.
         <br />
     </p>
