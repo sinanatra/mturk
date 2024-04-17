@@ -140,5 +140,6 @@
         /* display: flex; */
         min-height: 100vh;
         font-size: 12px;
+        padding: 0px 10px;
     }
 </style>
