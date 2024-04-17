@@ -1,4 +1,4 @@
-import{s as r,n as a}from"./scheduler.cSAxCcgE.js";import{S as n,i as c,f as l,k as h,p as g,q as p,b as f,d as u}from"./index.CmCBegWC.js";function m(s){let e,i=`<h1>Views of the working desk</h1> <h2>I asked the workers at Amazon Mechanical Turk to send me a photo of
+import{s as r,b as n,h as c,m as l,p as h,i as g,n as a,d as p}from"./scheduler.Bx9lCxiB.js";import{S as u,i as f}from"./index.D00NIsm6.js";function m(s){let e,i=`<h1>Views of the working desk</h1> <h2>I asked the workers at Amazon Mechanical Turk to send me a photo of
         their working setup. Here are the photos I received and the city they
         were sent from.</h2> <figure><img src="https://lh3.googleusercontent.com/d/17q1w5g-NpNtT2LAPYULfyvQeNt_9hLC3" alt="Mechanical Turk" class="svelte-1gua0zx"/> <figcaption>Kozhikode, IN</figcaption></figure> <p>After more than one year from the first experiment, I logged into the
         platform this time asking for photos of work desks, giving this as an
@@ -18,4 +18,4 @@ import{s as r,n as a}from"./scheduler.cSAxCcgE.js";import{S as n,i as c,f as l,k
         explanation. I therefore wonder how many institutions exploit this
         system, refusing payment but continuing to collect tagged data for free.
         At the same time, if usually a third or half of the data collected is
-        junk, where does this random content end up?</p>`;return{c(){e=l("section"),e.innerHTML=i,this.h()},l(t){e=h(t,"SECTION",{class:!0,"data-svelte-h":!0}),g(e)!=="svelte-12twtad"&&(e.innerHTML=i),this.h()},h(){p(e,"class","desc svelte-1gua0zx")},m(t,o){f(t,e,o)},p:a,i:a,o:a,d(t){t&&u(e)}}}class y extends n{constructor(e){super(),c(this,e,null,m,r,{})}}export{y as T};
+        junk, where does this random content end up?</p>`;return{c(){e=n("section"),e.innerHTML=i,this.h()},l(t){e=c(t,"SECTION",{class:!0,"data-svelte-h":!0}),l(e)!=="svelte-12twtad"&&(e.innerHTML=i),this.h()},h(){h(e,"class","desc svelte-1gua0zx")},m(t,o){g(t,e,o)},p:a,i:a,o:a,d(t){t&&p(e)}}}class y extends u{constructor(e){super(),f(this,e,null,m,r,{})}}export{y as T};

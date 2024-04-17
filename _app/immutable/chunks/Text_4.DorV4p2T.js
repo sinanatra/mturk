@@ -1,4 +1,4 @@
-import{s as n,n as o}from"./scheduler.cSAxCcgE.js";import{S as i,i as h,f as l,k as c,p as u,q as d,b as f,d as m}from"./index.CmCBegWC.js";function p(s){let e,a=`<h1>Opinions of the workers</h1> <h2>What do you like and detest about working for Amazon Mechanical Turk?
+import{s as n,b as i,h,m as l,p as c,i as u,n as o,d}from"./scheduler.Bx9lCxiB.js";import{S as f,i as m}from"./index.D00NIsm6.js";function p(s){let e,a=`<h1>Opinions of the workers</h1> <h2>What do you like and detest about working for Amazon Mechanical Turk?
         Why do you do it? Please share your honest feelings and opinions on the
         platform.</h2> <p>This time I repeated the task twice, by asking what are the feelings and
         opinion of the workers on the platform. The first time it was open to
@@ -40,4 +40,4 @@ import{s as n,n as o}from"./scheduler.cSAxCcgE.js";import{S as i,i as h,f as l,k
         rate goes below 99%. What really hurt my rate was a &quot;mass rejection&quot; of
         10 hits. It turns out that there was a glitch (I read it on
         MTURKOPTICON), but they would not reverse the rejections. That was so
-        unfair when it was their fault.</quote>`;return{c(){e=l("section"),e.innerHTML=a,this.h()},l(t){e=c(t,"SECTION",{class:!0,"data-svelte-h":!0}),u(e)!=="svelte-l5jz9i"&&(e.innerHTML=a),this.h()},h(){d(e,"class","desc svelte-1gua0zx")},m(t,r){f(t,e,r)},p:o,i:o,o,d(t){t&&m(e)}}}class y extends i{constructor(e){super(),h(this,e,null,p,n,{})}}export{y as T};
+        unfair when it was their fault.</quote>`;return{c(){e=i("section"),e.innerHTML=a,this.h()},l(t){e=h(t,"SECTION",{class:!0,"data-svelte-h":!0}),l(e)!=="svelte-l5jz9i"&&(e.innerHTML=a),this.h()},h(){c(e,"class","desc svelte-1gua0zx")},m(t,r){u(t,e,r)},p:o,i:o,o,d(t){t&&d(e)}}}class y extends f{constructor(e){super(),m(this,e,null,p,n,{})}}export{y as T};
