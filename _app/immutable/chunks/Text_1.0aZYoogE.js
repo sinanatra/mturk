@@ -1,4 +1,4 @@
-import{s as n,b as r,h as c,m as h,p as l,i as d,n as o,d as u}from"./scheduler.Bx9lCxiB.js";import{S as m,i as p}from"./index.D00NIsm6.js";function f(s){let e,a=`<h1>Views from outside the window</h1> <h2>I asked the workers at Amazon Mechanical Turk to send me a photo of
+import{s as n,e as r,c,r as h,b as l,i as d,n as o,d as u}from"./scheduler.yuft8Ghk.js";import{S as f,i as m}from"./index.Bj1xOIYC.js";function p(s){let e,a=`<h1>Views from outside the window</h1> <h2>I asked the workers at Amazon Mechanical Turk to send me a photo of
         their view out of the window for $0.20. Here are the photos I received
         and the city they were sent from.</h2>
 
@@ -20,4 +20,4 @@ import{s as n,b as r,h as c,m as h,p as l,i as d,n as o,d as u}from"./scheduler.
     images did not comply with the request. In some cases these were broken
     files, in others desktop screenshots, photos of animals or stock images.
     Quite a few entries were duplicated to collect extra rewards.
-    <figure><img src="./img2.png" alt="Mechanical Turk" class="svelte-1gua0zx"/> <figcaption>A screenshot of the review page from Mechanical Turks.</figcaption></figure> <figure><img src="./img1.png" alt="Google Formulaire" class="svelte-1gua0zx"/> <figcaption>A screenshot of the questionnaire provided on Mechanical Turks.</figcaption></figure>`;return{c(){e=r("section"),e.innerHTML=a,this.h()},l(t){e=c(t,"SECTION",{class:!0,"data-svelte-h":!0}),h(e)!=="svelte-1usbziz"&&(e.innerHTML=a),this.h()},h(){l(e,"class","desc svelte-1gua0zx")},m(t,i){d(t,e,i)},p:o,i:o,o,d(t){t&&u(e)}}}class k extends m{constructor(e){super(),p(this,e,null,f,n,{})}}export{k as T};
+    <figure><img src="./img2.png" alt="Mechanical Turk" class="svelte-1gua0zx"/> <figcaption>A screenshot of the review page from Mechanical Turks.</figcaption></figure> <figure><img src="./img1.png" alt="Google Formulaire" class="svelte-1gua0zx"/> <figcaption>A screenshot of the questionnaire provided on Mechanical Turks.</figcaption></figure>`;return{c(){e=r("section"),e.innerHTML=a,this.h()},l(t){e=c(t,"SECTION",{class:!0,"data-svelte-h":!0}),h(e)!=="svelte-1usbziz"&&(e.innerHTML=a),this.h()},h(){l(e,"class","desc svelte-1gua0zx")},m(t,i){d(t,e,i)},p:o,i:o,o,d(t){t&&u(e)}}}class k extends f{constructor(e){super(),m(this,e,null,p,n,{})}}export{k as T};
