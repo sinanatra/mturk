@@ -7,6 +7,8 @@
     let parentElement;
 
     let scroll = true;
+    let imageCandidates = [];
+    let imageCandidateIndex = 0;
 
     onMount(() => {
         parentElement = selectedElement.parentElement;
@@ -20,18 +22,69 @@
             });
         }
     }
+
+    function normalizePath(path) {
+        if (!path) return "";
+        return path.startsWith("/") ? path : `/${path}`;
+    }
+
+    function extractImageId(source) {
+        const raw = String(source || "");
+        if (!raw) return "";
+        const byQuery = raw.match(/[?&]id=([A-Za-z0-9_-]+)/);
+        if (byQuery?.[1]) return byQuery[1];
+        const byDrive = raw.match(/\/d\/([A-Za-z0-9_-]+)/);
+        if (byDrive?.[1]) return byDrive[1];
+        const byPath = raw.match(/cables\/images\/([A-Za-z0-9_-]+)\.[A-Za-z0-9]+$/);
+        if (byPath?.[1]) return byPath[1];
+        return "";
+    }
+
+    function buildImageCandidates(source) {
+        const raw = String(source || "").trim();
+        if (!raw) return [];
+        if (raw.includes("cables/images/")) {
+            return [normalizePath(raw.replace(/^https?:\/\/[^/]+\//, ""))];
+        }
+
+        const id = extractImageId(raw);
+        if (!id) return [raw];
+
+        const local = [
+            `/images/${id}.jpg`,
+            `/images/${id}.jpeg`,
+            `/images/${id}.png`,
+            `/images/${id}.webp`,
+            `/images/${id}.gif`,
+            `/cables/images/${id}.jpg`,
+            `/cables/images/${id}.jpeg`,
+            `/cables/images/${id}.png`,
+            `/cables/images/${id}.webp`,
+            `/cables/images/${id}.gif`,
+        ];
+        return local;
+    }
+
+    function onImageError() {
+        if (imageCandidateIndex < imageCandidates.length - 1) {
+            imageCandidateIndex += 1;
+        }
+    }
+
+    $: imageCandidates = buildImageCandidates(data?.["img"]);
+    $: if (imageCandidateIndex >= imageCandidates.length) {
+        imageCandidateIndex = 0;
+    }
+    $: imageSrc = imageCandidates[imageCandidateIndex] || "";
 </script>
 
 <div class:selected={$selected == data["img"]} bind:this={selectedElement}>
-    <a href={data["img"]} target="_blank" rel="noopener noreferrer">
+    <a href={imageSrc || data["img"]} target="_blank" rel="noopener noreferrer">
         <img
-            src="https://lh3.googleusercontent.com/d/{data['img'].replace(
-                'https://drive.google.com/u/0/open?usp=forms_web&id=',
-                '',
-            )}"
+            src={imageSrc}
             alt=""
             srcset=""
-            onerror="this.style.visibility='hidden'"
+            on:error={onImageError}
             on:mouseover={() => {
                 scroll = false;
                 $selected = data["img"];

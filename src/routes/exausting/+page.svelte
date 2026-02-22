@@ -2,37 +2,68 @@
     import Text_2 from "@components/texts/Text_2.svelte";
     import Map from "@components/Map.svelte";
     import Gallery from "@components/Gallery.svelte";
+    import imageIndex from "$lib/image-index.json";
 
     import { csv } from "d3";
     import { onMount } from "svelte";
 
     let data = [];
+
+    function extractImageId(source) {
+        const raw = String(source || "");
+        if (!raw) return "";
+        const byQuery = raw.match(/[?&]id=([A-Za-z0-9_-]+)/);
+        if (byQuery?.[1]) return byQuery[1];
+        const byDrive = raw.match(/\/d\/([A-Za-z0-9_-]+)/);
+        if (byDrive?.[1]) return byDrive[1];
+        const byPath = raw.match(
+            /cables\/images\/([A-Za-z0-9_-]+)\.[A-Za-z0-9]+$/,
+        );
+        if (byPath?.[1]) return byPath[1];
+        return "";
+    }
+
+    function imageCandidates(source) {
+        const raw = String(source || "").trim();
+        if (!raw) return [];
+
+        if (raw.startsWith("/images/")) return [raw];
+
+        const id = extractImageId(raw);
+        const candidates = [];
+
+        if (id) {
+            const filename = imageIndex[id];
+            if (filename) candidates.push(`/images/${filename}`);
+        }
+
+        candidates.push(raw);
+        return [...new Set(candidates)];
+    }
+
+    let task1Idx = 0;
+    let task3Idx = 0;
+
     onMount(async (d) => {
         data = await csv("exausting.csv");
 
         data = data
             .filter((d) => d.task_1)
-            .map((d) => {
-                return {
-                    ...d,
-                    task_1_url: d.task_1_url.replace(
-                        "https://drive.google.com/uc?export=view&id=",
-                        "https://lh3.googleusercontent.com/d/",
-                    ),
-                    task_3: d.task_3
-                        ? d.task_3?.replace(
-                              "https://drive.google.com/uc?export=view&id=",
-                              "https://lh3.googleusercontent.com/d/",
-                          )
-                        : undefined,
-                };
-            });
+            .map((d) => ({ ...d }));
     });
 
     let counter = 0;
     const incr = () => (counter += 1 % data.length);
 
     $: datum = data[counter];
+    $: {
+        task1Idx = 0;
+        task3Idx = 0;
+    }
+    $: task1Candidates = imageCandidates(datum?.task_1_url);
+    $: task3Candidates = imageCandidates(datum?.task_3);
+    $: task1Src = task1Candidates[task1Idx] || "";
+    $: task3Src = task3Candidates[task3Idx] || "";
 </script>
 
 {#if data.length == 0}
@@ -61,7 +92,14 @@
                             What can you see from outside of the windows?
                         </h4>
                         <div>
-                            <img src={datum.task_1_url} alt="" />
+                            <img
+                                src={task1Src}
+                                alt=""
+                                on:error={() => {
+                                    if (task1Idx < task1Candidates.length - 1)
+                                        task1Idx += 1;
+                                }}
+                            />
                         </div>
                     </div>
                     <p>{datum.city_1}</p>
@@ -89,7 +127,14 @@
                             paper.
                         </h4>
                         <div>
-                            <img src={datum.task_3} alt="" />
+                            <img
+                                src={task3Src}
+                                alt=""
+                                on:error={() => {
+                                    if (task3Idx < task3Candidates.length - 1)
+                                        task3Idx += 1;
+                                }}
+                            />
                         </div>
                     </div>
                     <p>{datum.city_3}</p>

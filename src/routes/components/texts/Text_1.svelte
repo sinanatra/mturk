@@ -13,7 +13,7 @@
     task. On average, Amazon Mechanical Turk pays between $1 and $6 per hour.
     <figure>
         <img
-            src="https://lh3.googleusercontent.com/d/1nXpH7sGJT4E8r6e5k9UWCMJY-j8yh9TC"
+            src="/images/1nXpH7sGJT4E8r6e5k9UWCMJY-j8yh9TC.jpg"
             alt="view from Sarasota,us"
         />
         <figcaption>View from Sarasota,US</figcaption>

@@ -15,13 +15,13 @@
     <div style="display: flex; margin:10px 0">
         <img
             style="flex:1; width:50%; object-fit:cover;"
-            src=" https://lh3.googleusercontent.com/d/1modSxHstSrpPYTvdJ_qP33QyTQNio8ms"
+            src=" /images/1modSxHstSrpPYTvdJ_qP33QyTQNio8ms.jpg"
             alt="view from MT"
         />
 
         <img
             style="flex:1; width:50%; object-fit:cover;"
-            src="https://lh3.googleusercontent.com/d/1gCjhA6x-dg4bPCI71LZt8_HJEp23pTla"
+            src="/images/1gCjhA6x-dg4bPCI71LZt8_HJEp23pTla.jpg"
             alt="view from MT"
         />
     </div>
@@ -31,7 +31,7 @@
     <div>
         <img
             style="object-fit:cover;"
-            src="https://lh3.googleusercontent.com/d/1xeKXdQq86X6NmWXXdghCGOfLETteOctm"
+            src="/images/1xeKXdQq86X6NmWXXdghCGOfLETteOctm.jpg"
             alt="view from MT"
         />
         <quote style="align-self: center; text-align:center;width:95%">↓</quote>
@@ -47,7 +47,7 @@
 
         <img
             style="object-fit:cover;"
-            src="https://lh3.googleusercontent.com/d/1tajUbDPP2r60-x6mq-yf4QlFaIv08pG8"
+            src="/images/1tajUbDPP2r60-x6mq-yf4QlFaIv08pG8.jpg"
             alt="view from MT"
         />
     </div>
@@ -61,13 +61,13 @@
     <div style="display: flex; margin:10px 0">
         <img
             style="flex:1; width:50%; object-fit:cover;"
-            src="https://lh3.googleusercontent.com/d/1fZ4k_jDzeA1d_A2XzMIX5h376wYB2ciD"
+            src="/images/1fZ4k_jDzeA1d_A2XzMIX5h376wYB2ciD.jpg"
             alt="view from MT"
         />
 
         <img
             style="flex:1; width:50%;"
-            src="https://lh3.googleusercontent.com/d/1IFqaowJXp14hMG8vodfz34iEfClWciXC"
+            src="/images/1IFqaowJXp14hMG8vodfz34iEfClWciXC.jpg"
             alt="view from MT"
         />
     </div>
