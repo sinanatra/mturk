@@ -78,7 +78,7 @@
 
   const RECORD_SIZE_PX = 1920; //3840;
   const RECORD_FPS = 30;
-  
+
   let p5CanvasEl = null;
   let isRecording4K = false;
   let recordingError = "";
@@ -456,7 +456,6 @@
       introBroken = normalizeMultilineText(intro.broken);
     }
 
-    
     if (typeof intro.text === "string") {
       const legacyIntro = normalizeMultilineText(intro.text);
       introWindows = legacyIntro;
@@ -654,8 +653,6 @@
       )
       .sort((a, b) => a.orderHint - b.orderHint);
 
-    
-    
     const bySourceImage = new Map();
     for (const chain of completeChains) {
       const key = chain.image?.imageUrl || chain.id;
@@ -694,7 +691,7 @@
         const textRecord = textBase
           ? {
               ...textBase,
-              text: mergedTexts.join(" 
+              text: mergedTexts.join(" // "),
               location: mergedTextLocations.join(" + ") || textBase.location,
               country: mergedTextCountries.join(" + ") || textBase.country,
             }
@@ -714,6 +711,7 @@
       })
       .sort((a, b) => a.orderHint - b.orderHint);
   }
+
   $: brokenById = mapById(brokenChains);
 
   $: {
@@ -722,7 +720,10 @@
     const windowsCols = Math.max(6, Math.ceil(Math.sqrt(windowsItems.length)));
     const screensCols = Math.max(6, Math.ceil(Math.sqrt(screensItems.length)));
     const opinionsCardW = Math.round(baseW * 1.55);
-    const opinionsCols = Math.max(5, Math.ceil(Math.sqrt(opinionsItems.length)));
+    const opinionsCols = Math.max(
+      5,
+      Math.ceil(Math.sqrt(opinionsItems.length)),
+    );
     const brokenCols = Math.max(8, Math.ceil(Math.sqrt(brokenChains.length)));
 
     windowsLayout = buildMasonryLayout(
@@ -760,7 +761,6 @@
       0,
     );
 
-    
     imageMetaVersion;
   }
   $: {
@@ -865,8 +865,12 @@
 
   function recordMatchesImageId(record, imageId) {
     if (!record || !imageId) return false;
-    if (record.imageUrl && imageIdFromUrl(record.imageUrl) === imageId) return true;
-    if (record.image?.imageUrl && imageIdFromUrl(record.image.imageUrl) === imageId)
+    if (record.imageUrl && imageIdFromUrl(record.imageUrl) === imageId)
+      return true;
+    if (
+      record.image?.imageUrl &&
+      imageIdFromUrl(record.image.imageUrl) === imageId
+    )
       return true;
     if (
       record.drawing?.imageUrl &&
@@ -1050,7 +1054,6 @@
       const ds = camera.toScale - camera.scale;
 
       if (viewState === "focus" || viewState === "broken-seq") {
-        
         const followMs = Math.max(120, Math.min(1200, focusAdvanceMs * 0.22));
         const posBlend = Math.min(1, dt / followMs);
         const scaleBlend = Math.min(1, dt / Math.max(90, followMs * 0.72));
@@ -1060,8 +1063,8 @@
         return;
       }
 
-      const posSpeed = viewState === "grid" ? 0.09 : 0.045; 
-      const scaleSpeed = viewState === "grid" ? 0.00018 : 0.0003; 
+      const posSpeed = viewState === "grid" ? 0.09 : 0.045;
+      const scaleSpeed = viewState === "grid" ? 0.00018 : 0.0003;
       const maxPosStep = posSpeed * dt;
       if (distance <= maxPosStep || distance === 0) {
         camera.x = camera.toX;
@@ -1092,7 +1095,6 @@
       s.fill(...VIEWS_PALETTE.tile, alpha);
       s.rect(entry.x, entry.y, entry.w, entry.h);
 
-      
       const scale = Math.min(entry.w / image.width, entry.h / image.height);
       const drawW = image.width * scale;
       const drawH = image.height * scale;
@@ -1433,7 +1435,10 @@
       if (!paused) {
         phaseElapsedMs += frameDeltaMs;
         if (anchorHoldMsRemaining > 0) {
-          anchorHoldMsRemaining = Math.max(0, anchorHoldMsRemaining - frameDeltaMs);
+          anchorHoldMsRemaining = Math.max(
+            0,
+            anchorHoldMsRemaining - frameDeltaMs,
+          );
           if (anchorHoldMsRemaining <= 0) lockedAnchorRecordId = "";
         }
       } else if (skimZoomRunMs > 0) {
@@ -1510,11 +1515,16 @@
       );
       let preTimelineNote = null;
       if (preTimeline.notes.length) {
-        const preInfo = noteIndexAtElapsed(preTimeline.notes, preEffectiveElapsedSec, {
-          loop: preTimeline.loop,
-          restartPauseSec: preTimeline.restartPauseSec,
-        });
-        if (preInfo.index >= 0) preTimelineNote = preTimeline.notes[preInfo.index];
+        const preInfo = noteIndexAtElapsed(
+          preTimeline.notes,
+          preEffectiveElapsedSec,
+          {
+            loop: preTimeline.loop,
+            restartPauseSec: preTimeline.restartPauseSec,
+          },
+        );
+        if (preInfo.index >= 0)
+          preTimelineNote = preTimeline.notes[preInfo.index];
       }
       const anchorDrivenOpinionsMode =
         phase.mode === "opinions" &&
@@ -1616,7 +1626,7 @@
           focusBlend = 1;
         } else {
           const moveT = (localProgress - holdHalf) / (1 - holdRatio);
-          
+
           focusBlend = moveT;
         }
         focusIndex = focusBaseIndex;
@@ -1680,9 +1690,7 @@
         if (forcedIndex >= 0) {
           if (viewState === "focus" && traversal.length > 0) {
             traversalOffset =
-              (forcedIndex -
-                focusSequenceRawIndex +
-                traversal.length * 16) %
+              (forcedIndex - focusSequenceRawIndex + traversal.length * 16) %
               traversal.length;
           }
           focusBaseIndex = forcedIndex;
@@ -2015,7 +2023,10 @@
       } else {
         const activeNoteId = activeNote?.id || "";
         if (activeNoteId !== lastResolvedNoteId) {
-          const nextAnchorRecordId = resolveNoteAnchorRecordId(activeNote, ordered);
+          const nextAnchorRecordId = resolveNoteAnchorRecordId(
+            activeNote,
+            ordered,
+          );
           if (nextAnchorRecordId) {
             noteAnchorRecordId = nextAnchorRecordId;
             noteAnchorHoldMs = Math.max(
