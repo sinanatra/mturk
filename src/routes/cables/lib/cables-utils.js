@@ -43,7 +43,7 @@ export const VIEWS_PALETTE = {
 export const OPINIONS_TEXT_STYLE = {
   sizeScale: 0.82,
   leadingRatio: 1.2,
-  excerpt: 520,
+  excerpt: 2200,
 };
 
 export const BROKEN_TEXT_STYLE = {
@@ -284,6 +284,8 @@ export function buildColumnSnakeTraversal(list, layout) {
 
 export function normalizeNote(raw, index) {
   const normalizedTargetId = normalizeText(raw.targetId || "");
+  const normalizedAnchorId = normalizeText(raw.anchorId || "");
+  const normalizedAnchorImageId = normalizeText(raw.anchorImageId || "");
   const normalizedMode =
     raw.mode === "target" || (normalizedTargetId && raw.mode !== "time")
       ? "target"
@@ -298,6 +300,8 @@ export function normalizeNote(raw, index) {
     text: normalizeMultilineText(raw.text || ""),
     targetId: normalizedTargetId,
     targetStep: normalizeText(raw.targetStep || "any") || "any",
+    anchorId: normalizedAnchorId,
+    anchorImageId: normalizedAnchorImageId,
     durationSec: Number.isFinite(Number(raw.durationSec))
       ? Math.max(0.5, Number(raw.durationSec))
       : 10,

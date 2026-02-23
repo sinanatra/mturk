@@ -456,7 +456,7 @@
       introBroken = normalizeMultilineText(intro.broken);
     }
 
-    // Backward compatibility with previous single intro text.
+    
     if (typeof intro.text === "string") {
       const legacyIntro = normalizeMultilineText(intro.text);
       introWindows = legacyIntro;
@@ -654,8 +654,8 @@
       )
       .sort((a, b) => a.orderHint - b.orderHint);
 
-    // Merge duplicated runs that start from the same source image,
-    // concatenating unique annotations into one text step.
+    
+    
     const bySourceImage = new Map();
     for (const chain of completeChains) {
       const key = chain.image?.imageUrl || chain.id;
@@ -694,7 +694,7 @@
         const textRecord = textBase
           ? {
               ...textBase,
-              text: mergedTexts.join(" // "),
+              text: mergedTexts.join(" 
               location: mergedTextLocations.join(" + ") || textBase.location,
               country: mergedTextCountries.join(" + ") || textBase.country,
             }
@@ -760,7 +760,7 @@
       0,
     );
 
-    // Keep reactivity linked to image loading metadata updates.
+    
     imageMetaVersion;
   }
   $: {
@@ -826,6 +826,92 @@
     return null;
   }
 
+  function extractInlineImageIds(value) {
+    const raw = String(value || "");
+    if (!raw) return [];
+    const matches = raw.match(/\b[A-Za-z0-9_-]{20,}\b/g) || [];
+    return [...new Set(matches)];
+  }
+
+  function extractInlineRecordIds(value) {
+    const raw = String(value || "");
+    if (!raw) return [];
+    const matches = [...raw.matchAll(/\[\[id:([A-Za-z0-9_-]{3,})\]\]/g)];
+    return [...new Set(matches.map((match) => match[1]).filter(Boolean))];
+  }
+
+  function stripInlineImageIds(value) {
+    const raw = normalizeMultilineText(value);
+    if (!raw) return "";
+    const lines = raw
+      .split("\n")
+      .map((line) =>
+        line
+          .replace(/\[\[id:[A-Za-z0-9_-]{3,}\]\]/g, "")
+          .replace(/\b[A-Za-z0-9_-]{20,}\b/g, "")
+          .replace(/[ \t]{2,}/g, " ")
+          .trim(),
+      )
+      .filter((line) => line.length > 0);
+    return lines.join("\n");
+  }
+
+  function imageIdFromUrl(url) {
+    const raw = String(url || "");
+    if (!raw) return "";
+    const match = raw.match(/\/([A-Za-z0-9_-]{20,})\.[A-Za-z0-9]+(?:$|\?)/);
+    return match?.[1] || "";
+  }
+
+  function recordMatchesImageId(record, imageId) {
+    if (!record || !imageId) return false;
+    if (record.imageUrl && imageIdFromUrl(record.imageUrl) === imageId) return true;
+    if (record.image?.imageUrl && imageIdFromUrl(record.image.imageUrl) === imageId)
+      return true;
+    if (
+      record.drawing?.imageUrl &&
+      imageIdFromUrl(record.drawing.imageUrl) === imageId
+    )
+      return true;
+    return false;
+  }
+
+  function resolveNoteAnchorRecordId(note, orderedRecords) {
+    if (!note || !orderedRecords.length) return "";
+    const explicitRecordId = normalizeText(note.anchorId || "");
+    if (explicitRecordId) {
+      const recordIdSet = new Set(orderedRecords.map((item) => item.id));
+      if (recordIdSet.has(explicitRecordId)) return explicitRecordId;
+    }
+
+    const explicitImageId = normalizeText(note.anchorImageId || "");
+    if (explicitImageId) {
+      const record = orderedRecords.find((item) =>
+        recordMatchesImageId(item, explicitImageId),
+      );
+      if (record?.id) return record.id;
+    }
+
+    const noteText = note.text || "";
+    const recordIds = extractInlineRecordIds(noteText);
+    if (recordIds.length && orderedRecords.length) {
+      const recordIdSet = new Set(orderedRecords.map((item) => item.id));
+      for (const recordId of recordIds) {
+        if (recordIdSet.has(recordId)) return recordId;
+      }
+    }
+
+    const imageIds = extractInlineImageIds(noteText);
+    if (!imageIds.length || !orderedRecords.length) return "";
+    for (const imageId of imageIds) {
+      const record = orderedRecords.find((item) =>
+        recordMatchesImageId(item, imageId),
+      );
+      if (record?.id) return record.id;
+    }
+    return "";
+  }
+
   function isTypingElementFocused() {
     if (!browser) return false;
     const el = document.activeElement;
@@ -862,6 +948,14 @@
     let noteSkimSeen = noteSkimToken;
     const noteSkimOffsetByTimeline = new Map();
     let skimZoomRunMs = 0;
+    let noteAnchorRecordId = "";
+    let noteAnchorHoldMs = 0;
+    let zoomAnchorRecordId = "";
+    let lastResolvedNoteId = "";
+    let traversalOffset = 0;
+    let anchorHoldMsRemaining = 0;
+    let lockedAnchorRecordId = "";
+    let snapCameraToAnchor = false;
     let font;
 
     function resetPhaseProgress(nowMs = 0) {
@@ -871,6 +965,14 @@
       brokenLastCompletedId = null;
       viewStatePrev = "grid";
       zoomStartCamera = null;
+      traversalOffset = 0;
+      noteAnchorRecordId = "";
+      noteAnchorHoldMs = 0;
+      zoomAnchorRecordId = "";
+      lastResolvedNoteId = "";
+      anchorHoldMsRemaining = 0;
+      lockedAnchorRecordId = "";
+      snapCameraToAnchor = false;
     }
 
     function jumpPhase(offset = 1, nowMs = 0) {
@@ -948,7 +1050,7 @@
       const ds = camera.toScale - camera.scale;
 
       if (viewState === "focus" || viewState === "broken-seq") {
-        // Keep camera responsiveness proportional to chapter speed.
+        
         const followMs = Math.max(120, Math.min(1200, focusAdvanceMs * 0.22));
         const posBlend = Math.min(1, dt / followMs);
         const scaleBlend = Math.min(1, dt / Math.max(90, followMs * 0.72));
@@ -958,8 +1060,8 @@
         return;
       }
 
-      const posSpeed = viewState === "grid" ? 0.09 : 0.045; // world units per ms
-      const scaleSpeed = viewState === "grid" ? 0.00018 : 0.0003; // scale units per ms
+      const posSpeed = viewState === "grid" ? 0.09 : 0.045; 
+      const scaleSpeed = viewState === "grid" ? 0.00018 : 0.0003; 
       const maxPosStep = posSpeed * dt;
       if (distance <= maxPosStep || distance === 0) {
         camera.x = camera.toX;
@@ -990,7 +1092,7 @@
       s.fill(...VIEWS_PALETTE.tile, alpha);
       s.rect(entry.x, entry.y, entry.w, entry.h);
 
-      // Show full image while matching tile ratio set by masonry.
+      
       const scale = Math.min(entry.w / image.width, entry.h / image.height);
       const drawW = image.width * scale;
       const drawH = image.height * scale;
@@ -1330,6 +1432,10 @@
       lastFrameMs = now;
       if (!paused) {
         phaseElapsedMs += frameDeltaMs;
+        if (anchorHoldMsRemaining > 0) {
+          anchorHoldMsRemaining = Math.max(0, anchorHoldMsRemaining - frameDeltaMs);
+          if (anchorHoldMsRemaining <= 0) lockedAnchorRecordId = "";
+        }
       } else if (skimZoomRunMs > 0) {
         phaseElapsedMs += frameDeltaMs;
         skimZoomRunMs = Math.max(0, skimZoomRunMs - frameDeltaMs);
@@ -1355,12 +1461,67 @@
           zoomStartCamera = camera.initialized
             ? { x: camera.x, y: camera.y, scale: camera.scale }
             : { x: 0, y: 0, scale: 1 };
+          const focusState = phase.mode === "broken" ? "broken-seq" : "focus";
+          const focusTimeline = editorialTimelineFor(phase.id, focusState);
+          const firstFocusNote = focusTimeline.notes[0] || null;
+          if (firstFocusNote) {
+            const preAnchorId = resolveNoteAnchorRecordId(
+              firstFocusNote,
+              ordered,
+            );
+            if (preAnchorId) {
+              zoomAnchorRecordId = preAnchorId;
+              noteAnchorRecordId = preAnchorId;
+              noteAnchorHoldMs = Math.max(
+                0,
+                Math.round(noteDurSec(firstFocusNote) * 1000),
+              );
+            }
+          }
         }
-        if (viewState === "grid") zoomStartCamera = null;
+        if (viewState === "grid") {
+          zoomStartCamera = null;
+          zoomAnchorRecordId = "";
+        }
         viewStatePrev = viewState;
       }
 
       const focusElapsedMs = Math.max(0, elapsed - overviewMs - zoomInMs);
+      const preNoteViewState =
+        viewState === "zoom-in"
+          ? phase.mode === "broken"
+            ? "broken-seq"
+            : "focus"
+          : viewState;
+      const preViewElapsedSec =
+        viewState === "grid"
+          ? elapsed / 1000
+          : viewState === "zoom-in"
+            ? 0
+            : focusElapsedMs / 1000;
+      const preTimeline = editorialTimelineFor(phase.id, preNoteViewState);
+      const preBaseElapsedSec =
+        preTimeline.elapsedMode === "view" ? preViewElapsedSec : elapsed / 1000;
+      const preElapsedOffset =
+        noteSkimOffsetByTimeline.get(preTimeline.key) || 0;
+      const preEffectiveElapsedSec = Math.max(
+        0,
+        preBaseElapsedSec + preElapsedOffset,
+      );
+      let preTimelineNote = null;
+      if (preTimeline.notes.length) {
+        const preInfo = noteIndexAtElapsed(preTimeline.notes, preEffectiveElapsedSec, {
+          loop: preTimeline.loop,
+          restartPauseSec: preTimeline.restartPauseSec,
+        });
+        if (preInfo.index >= 0) preTimelineNote = preTimeline.notes[preInfo.index];
+      }
+      const anchorDrivenOpinionsMode =
+        phase.mode === "opinions" &&
+        (preNoteViewState === "focus" || preNoteViewState === "zoom-in");
+      const forcedFocusRecordId = anchorDrivenOpinionsMode
+        ? resolveNoteAnchorRecordId(preTimelineNote, ordered)
+        : "";
       const baseFocusAdvanceMs = Math.max(1, phase.focusAdvanceMs || 1);
       const focusNarrativeState =
         phase.mode === "broken" ? "broken-seq" : "focus";
@@ -1399,14 +1560,27 @@
       if (focusIndex >= traversal.length) focusIndex = 0;
       let focusBaseIndex = focusIndex;
       let focusBlend = 0;
+      let focusSequenceRawIndex = 0;
       let brokenFocusState = "image";
 
       if (viewState === "zoom-in") {
-        focusBaseIndex = 0;
-        focusIndex = 0;
+        const zoomAnchorIndex = zoomAnchorRecordId
+          ? traversal.indexOf(zoomAnchorRecordId)
+          : -1;
+        if (zoomAnchorIndex >= 0) {
+          focusBaseIndex = zoomAnchorIndex;
+          focusIndex = zoomAnchorIndex;
+        } else {
+          focusBaseIndex = 0;
+          focusIndex = 0;
+        }
       } else if (!paused && viewState === "broken-seq") {
         const seqMs = Math.max(0, focusElapsedMs);
-        focusBaseIndex = Math.floor(seqMs / brokenChainMs) % traversal.length;
+        const rawIndex = Math.floor(seqMs / brokenChainMs) % traversal.length;
+        focusSequenceRawIndex = rawIndex;
+        focusBaseIndex =
+          (rawIndex + traversalOffset + traversal.length * 16) %
+          traversal.length;
         if (seqMs >= brokenChainMs && traversal.length > 1) {
           brokenLastCompletedId =
             traversal[
@@ -1428,7 +1602,11 @@
         effectiveFocusAdvanceMs > 0
       ) {
         brokenLastCompletedId = null;
-        focusBaseIndex = Math.floor(autoplayProgress) % traversal.length;
+        const rawIndex = Math.floor(autoplayProgress) % traversal.length;
+        focusSequenceRawIndex = rawIndex;
+        focusBaseIndex =
+          (rawIndex + traversalOffset + traversal.length * 16) %
+          traversal.length;
         const localProgress = autoplayProgress - Math.floor(autoplayProgress);
         const holdRatio = 0.54;
         const holdHalf = holdRatio / 2;
@@ -1438,12 +1616,80 @@
           focusBlend = 1;
         } else {
           const moveT = (localProgress - holdHalf) / (1 - holdRatio);
-          // Linear movement between two holds.
+          
           focusBlend = moveT;
         }
         focusIndex = focusBaseIndex;
       } else if (viewState !== "broken-seq") {
         brokenLastCompletedId = null;
+      }
+
+      if (
+        noteAnchorRecordId &&
+        (viewState === "focus" ||
+          viewState === "zoom-in" ||
+          viewState === "broken-seq") &&
+        !anchorDrivenOpinionsMode
+      ) {
+        const anchorIndex = traversal.indexOf(noteAnchorRecordId);
+        if (anchorIndex >= 0) {
+          const len = traversal.length;
+          traversalOffset = (anchorIndex + len * 16) % len;
+          focusBaseIndex = anchorIndex;
+          focusIndex = anchorIndex;
+          focusBlend = 0;
+          if (viewState === "zoom-in") {
+            zoomAnchorRecordId = noteAnchorRecordId;
+            snapCameraToAnchor = false;
+          } else {
+            lockedAnchorRecordId = noteAnchorRecordId;
+            anchorHoldMsRemaining = Math.max(0, Math.round(noteAnchorHoldMs));
+            snapCameraToAnchor = true;
+          }
+          if (viewState === "broken-seq") {
+            brokenFocusState = "image";
+            brokenLastCompletedId = null;
+          }
+        }
+        noteAnchorRecordId = "";
+        noteAnchorHoldMs = 0;
+      }
+
+      if (
+        lockedAnchorRecordId &&
+        anchorHoldMsRemaining > 0 &&
+        (viewState === "focus" || viewState === "broken-seq")
+      ) {
+        const lockedIndex = traversal.indexOf(lockedAnchorRecordId);
+        if (lockedIndex >= 0) {
+          focusBaseIndex = lockedIndex;
+          focusIndex = lockedIndex;
+          focusBlend = 0;
+          if (viewState === "broken-seq") {
+            brokenFocusState = "image";
+            brokenLastCompletedId = null;
+          }
+        } else {
+          lockedAnchorRecordId = "";
+          anchorHoldMsRemaining = 0;
+        }
+      }
+
+      if (forcedFocusRecordId) {
+        const forcedIndex = traversal.indexOf(forcedFocusRecordId);
+        if (forcedIndex >= 0) {
+          if (viewState === "focus" && traversal.length > 0) {
+            traversalOffset =
+              (forcedIndex -
+                focusSequenceRawIndex +
+                traversal.length * 16) %
+              traversal.length;
+          }
+          focusBaseIndex = forcedIndex;
+          focusIndex = forcedIndex;
+          focusBlend = 0;
+          if (viewState === "zoom-in") zoomAnchorRecordId = forcedFocusRecordId;
+        }
       }
 
       const focusId = traversal[focusBaseIndex];
@@ -1474,12 +1720,17 @@
         focusEntry.h +
         (nextFocusEntry.h - focusEntry.h) *
           (viewState === "focus" ? focusBlend : 0);
-      const rawFocusScale = Math.min(
-        (stageSize * (1 - focusPaddingRatio)) / Math.max(blendedFocusW, 1),
-        (stageSize * (1 - focusPaddingRatio)) / Math.max(blendedFocusH, 1),
-      );
       const minFocusFactor = 1 / Math.max(0.35, 1 - focusPaddingRatio);
       const minFocusScale = fitScale * minFocusFactor;
+      const rawFocusScale =
+        type === "text"
+          ? (stageSize * (1 - focusPaddingRatio)) / Math.max(focusEntry.w, 1)
+          : Math.min(
+              (stageSize * (1 - focusPaddingRatio)) /
+                Math.max(blendedFocusW, 1),
+              (stageSize * (1 - focusPaddingRatio)) /
+                Math.max(blendedFocusH, 1),
+            );
       const focusScale = Math.max(minFocusScale, rawFocusScale);
 
       const driftX =
@@ -1514,9 +1765,23 @@
         camera.toY = target.y;
         camera.toScale = target.scale;
         camera.lastMs = now;
+      } else if (snapCameraToAnchor) {
+        camera.initialized = true;
+        camera.x = target.x;
+        camera.y = target.y;
+        camera.scale = target.scale;
+        camera.toX = target.x;
+        camera.toY = target.y;
+        camera.toScale = target.scale;
+        camera.lastMs = now;
+        snapCameraToAnchor = false;
       } else {
         setCameraTarget(target, now);
-        tickCamera(now, viewState, effectiveFocusAdvanceMs);
+        const cameraFollowMs =
+          forcedFocusRecordId && viewState === "focus"
+            ? Math.max(2200, effectiveFocusAdvanceMs * 3.2)
+            : effectiveFocusAdvanceMs;
+        tickCamera(now, viewState, cameraFollowMs);
       }
 
       s.push();
@@ -1558,7 +1823,12 @@
           drawImage(record.imageUrl, entry, alpha, desaturate);
           drawCardMeta(record, entry, alpha);
         } else if (type === "text") {
-          const alpha = 1;
+          const inFocusedMode =
+            viewState === "focus" || viewState === "zoom-in";
+          const focused = inFocusedMode ? record.id === renderedFocusId : false;
+          const alpha = inFocusedMode && !focused ? 0.86 : 1;
+          const textColor =
+            inFocusedMode && !focused ? [0, 0, 56] : [0, 0, 100];
           drawText(
             record.text,
             entry,
@@ -1568,9 +1838,9 @@
             OPINIONS_TEXT_STYLE.sizeScale,
             OPINIONS_TEXT_STYLE.excerpt,
             OPINIONS_TEXT_STYLE.leadingRatio,
-            [0, 0, 100],
+            textColor,
           );
-          drawCardMeta(record, entry, alpha);
+          drawCardMeta(record, entry, inFocusedMode && !focused ? 0.52 : alpha);
         } else if (viewState === "broken-seq") {
           const focused = record.id === focusId;
           if (focused) {
@@ -1737,7 +2007,26 @@
         },
         viewElapsedForNote,
       );
-      activeEditorialText = activeNote?.text || "";
+      const rawEditorialText = activeNote?.text || "";
+      if (anchorDrivenOpinionsMode) {
+        noteAnchorRecordId = "";
+        noteAnchorHoldMs = 0;
+        lastResolvedNoteId = "";
+      } else {
+        const activeNoteId = activeNote?.id || "";
+        if (activeNoteId !== lastResolvedNoteId) {
+          const nextAnchorRecordId = resolveNoteAnchorRecordId(activeNote, ordered);
+          if (nextAnchorRecordId) {
+            noteAnchorRecordId = nextAnchorRecordId;
+            noteAnchorHoldMs = Math.max(
+              0,
+              Math.round(noteDurSec(activeNote) * 1000),
+            );
+          }
+          lastResolvedNoteId = activeNoteId;
+        }
+      }
+      activeEditorialText = stripInlineImageIds(rawEditorialText);
       activeIntroText = introForPhase(phase.id);
 
       phaseLabelForUi = `${phase.label} - ${viewState}`;
@@ -1773,8 +2062,7 @@
       on:nextStory={nextStory}
       on:prevText={prevText}
       on:nextText={nextText}
-      on:toggleSyncFocus={() =>
-        (syncFocusToEditorial = !syncFocusToEditorial)}
+      on:toggleSyncFocus={() => (syncFocusToEditorial = !syncFocusToEditorial)}
       on:toggleRecording={toggle4KRecording}
       on:focusPaddingChange={(event) => {
         const next = Number(event.detail);
