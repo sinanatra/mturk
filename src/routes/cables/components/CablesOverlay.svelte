@@ -72,7 +72,7 @@
     margin: 0;
     padding: 0;
     display: inline;
-    font-size: clamp(15px, 1.2vw, 20px);
+    font-size: clamp(15px, 1.25vw, 21px);
     line-height: 0.9;
     text-align: center;
     white-space: pre-line;

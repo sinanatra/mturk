@@ -69,6 +69,8 @@
   let stageCenterXPx = 0;
   let stageCenterYPx = 0;
   let stageSubtitleYPx = 0;
+  let stageProgressRatio = 0;
+  let stageProgressPath = "M 0 0";
 
   let editorialNotes = [];
   let introWindows = "";
@@ -96,6 +98,48 @@
 
   let focusPaddingRatio = 0.25;
   let syncFocusToEditorial = true;
+
+  function buildStageProgressPath(ratio) {
+    const r = Math.max(0, Math.min(1, Number(ratio) || 0));
+    const total = 400;
+    let remaining = total * r;
+    const points = [[0, 0]];
+
+    const pushPoint = (x, y) => {
+      const last = points[points.length - 1];
+      if (!last || last[0] !== x || last[1] !== y) points.push([x, y]);
+    };
+
+    if (remaining <= 0) return "M 0 0";
+
+    // top edge
+    if (remaining <= 100) {
+      pushPoint(remaining, 0);
+      return `M ${points[0][0]} ${points[0][1]} L ${points[1][0]} ${points[1][1]}`;
+    }
+    pushPoint(100, 0);
+    remaining -= 100;
+
+    // right edge
+    if (remaining <= 100) {
+      pushPoint(100, remaining);
+      return `M ${points[0][0]} ${points[0][1]} ` + points.slice(1).map((p) => `L ${p[0]} ${p[1]}`).join(" ");
+    }
+    pushPoint(100, 100);
+    remaining -= 100;
+
+    // bottom edge
+    if (remaining <= 100) {
+      pushPoint(100 - remaining, 100);
+      return `M ${points[0][0]} ${points[0][1]} ` + points.slice(1).map((p) => `L ${p[0]} ${p[1]}`).join(" ");
+    }
+    pushPoint(0, 100);
+    remaining -= 100;
+
+    // left edge
+    pushPoint(0, Math.max(0, 100 - remaining));
+    return `M ${points[0][0]} ${points[0][1]} ` + points.slice(1).map((p) => `L ${p[0]} ${p[1]}`).join(" ");
+  }
 
   function stopRecordingStream() {
     if (recordingRaf) {
@@ -264,9 +308,9 @@
     const editorialMetrics = getRecordingOverlayMetrics({
       textSelector: ".editorialText",
       boxSelector: ".editorialTape",
-      fallbackFontPx: RECORD_SIZE_PX * 0.018,
-      fallbackLineHeight: RECORD_SIZE_PX * 0.021,
-      fallbackWidthPx: RECORD_SIZE_PX * 0.62,
+      fallbackFontPx: RECORD_SIZE_PX * 0.019,
+      fallbackLineHeight: RECORD_SIZE_PX * 0.023,
+      fallbackWidthPx: RECORD_SIZE_PX * 0.78,
     });
 
     drawRecordingOverlayText(recordingCtx, activeIntroText, {
@@ -392,6 +436,7 @@
   }
 
   function nextStory() {
+    paused = false;
     storyAdvanceToken += 1;
   }
 
@@ -609,6 +654,22 @@
     return "";
   }
 
+  function timelineProgressRatio(timeline, elapsedSec) {
+    if (!timeline?.notes?.length) return null;
+    const totalSec = timeline.notes.reduce((sum, note) => sum + noteDurSec(note), 0);
+    if (totalSec <= 0) return 0;
+
+    let t = Math.max(0, Number(elapsedSec) || 0);
+    if (timeline.loop) {
+      const cycle = totalSec + Math.max(0, timeline.restartPauseSec || 0);
+      if (cycle > 0) t %= cycle;
+      if (t >= totalSec) return 1;
+    } else {
+      t = Math.min(totalSec, t);
+    }
+    return Math.max(0, Math.min(1, t / totalSec));
+  }
+
   $: records = rows.map(normalizeRecord);
   $: windowsItems = sortRecords(
     records.filter((row) => row.mode === "windows" && row.imageUrl),
@@ -775,6 +836,7 @@
     stageCenterYPx = stageTopPx + stageSizePx / 2;
     stageSubtitleYPx = stageBottomPx - 8;
     editorialWidthPx = Math.max(0, Math.round(stageSizePx * 0.62));
+    stageProgressPath = buildStageProgressPath(stageProgressRatio);
   }
   $: windowsTraversal = buildColumnSnakeTraversal(windowsItems, windowsLayout);
   $: screensTraversal = buildColumnSnakeTraversal(screensItems, screensLayout);
@@ -1419,12 +1481,21 @@
       if (storyTokenSeen !== storyAdvanceToken) {
         const delta = Math.max(1, storyAdvanceToken - storyTokenSeen);
         jumpPhase(delta, now);
+        camera.initialized = false;
+        camera.x = 0;
+        camera.y = 0;
+        camera.scale = 1;
+        camera.toX = 0;
+        camera.toY = 0;
+        camera.toScale = 1;
+        camera.lastMs = now;
         storyTokenSeen = storyAdvanceToken;
       }
 
       const phase = activePhase();
       const { ordered, byId, layout, traversal, type } = phaseCollection(phase);
       if (!ordered.length || !traversal.length) {
+        stageProgressRatio = 0;
         lastFrameMs = now;
         return;
       }
@@ -1559,6 +1630,10 @@
 
       const phaseTotalMs = overviewMs + zoomInMs + focusCycleMs;
       const cycleCompleted = focusElapsedMs >= focusCycleMs;
+      stageProgressRatio = Math.max(
+        0,
+        Math.min(1, elapsed / Math.max(1, phaseTotalMs)),
+      );
 
       if (!paused && (cycleCompleted || elapsed >= phaseTotalMs)) {
         resetPhaseProgress(now);
@@ -2040,7 +2115,22 @@
       activeEditorialText = stripInlineImageIds(rawEditorialText);
       activeIntroText = introForPhase(phase.id);
 
-      phaseLabelForUi = `${phase.label} - ${viewState}`;
+      const ratioFromNotes = timelineProgressRatio(
+        timelineForResolve,
+        effectiveElapsedSec,
+      );
+      if (ratioFromNotes !== null) {
+        if (timelineForResolve.elapsedMode === "view") {
+          stageProgressRatio =
+            noteStateForResolve === "grid"
+              ? ratioFromNotes * 0.5
+              : 0.5 + ratioFromNotes * 0.5;
+        } else {
+          stageProgressRatio = ratioFromNotes;
+        }
+      }
+
+      phaseLabelForUi = `${phase.label} - ${noteStateForResolve}`;
     };
   };
 </script>
@@ -2061,6 +2151,15 @@
       class="stageFrame"
       style={`left:${stageLeftPx}px; top:${stageTopPx}px; width:${stageSizePx}px; height:${stageSizePx}px;`}
     />
+
+    <section
+      class="stageProgress"
+      style={`left:${stageLeftPx}px; top:${stageTopPx}px; width:${stageSizePx}px; height:${stageSizePx}px;`}
+    >
+      <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none">
+        <path d={stageProgressPath} fill="none" class="stageProgressLine" />
+      </svg>
+    </section>
 
     <CablesControls
       {phaseLabelForUi}
@@ -2111,8 +2210,20 @@
   .stageFrame {
     position: fixed;
     box-sizing: border-box;
-    border: 1px solid rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     pointer-events: none;
     z-index: 11;
+  }
+
+  .stageProgress {
+    position: fixed;
+    pointer-events: none;
+    z-index: 12;
+  }
+
+  .stageProgressLine {
+    stroke: rgba(255, 249, 210, 1);
+    stroke-width: 1;
+    vector-effect: non-scaling-stroke;
   }
 </style>
