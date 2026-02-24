@@ -12,7 +12,7 @@ export const TIMELINE = [
     label: "Screens",
     mode: "screens",
     overviewMs: 9000,
-    zoomInMs: 1800,
+    zoomInMs: 4200,
     focusAdvanceMs: 10000,
   },
   {

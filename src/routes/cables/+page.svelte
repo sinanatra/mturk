@@ -80,6 +80,8 @@
 
   const RECORD_SIZE_PX = 1920; //3840;
   const RECORD_FPS = 30;
+  const RECORD_FINAL_HOLD_MS = 180;
+  const RECORD_BLACKOUT_MS = 3000;
 
   let p5CanvasEl = null;
   let isRecording4K = false;
@@ -91,6 +93,10 @@
   let recordingChunks = [];
   let recordingRaf = 0;
   let saveRecordingOnStop = true;
+  let recordingFinalizing = false;
+  let recordingFinalizeHoldUntilMs = 0;
+  let recordingBlackoutUntilMs = 0;
+  let freezeBrokenOnDrawing = false;
 
   const imageCache = new Map();
   const imageMeta = new Map();
@@ -141,6 +147,48 @@
     return `M ${points[0][0]} ${points[0][1]} ` + points.slice(1).map((p) => `L ${p[0]} ${p[1]}`).join(" ");
   }
 
+  function drawRecordingStageProgress(ctx, ratio, sizePx) {
+    const r = Math.max(0, Math.min(1, Number(ratio) || 0));
+    if (r <= 0) return;
+
+    const inset = 1;
+    const span = Math.max(1, sizePx - inset * 2);
+    const perimeter = span * 4;
+    let remaining = perimeter * r;
+
+    const left = inset;
+    const top = inset;
+    const right = inset + span;
+    const bottom = inset + span;
+
+    ctx.save();
+    ctx.strokeStyle = "rgba(255, 249, 210, 1)";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(left, top);
+
+    const topStep = Math.min(span, remaining);
+    ctx.lineTo(left + topStep, top);
+    remaining -= topStep;
+    if (remaining > 0) {
+      const rightStep = Math.min(span, remaining);
+      ctx.lineTo(right, top + rightStep);
+      remaining -= rightStep;
+    }
+    if (remaining > 0) {
+      const bottomStep = Math.min(span, remaining);
+      ctx.lineTo(right - bottomStep, bottom);
+      remaining -= bottomStep;
+    }
+    if (remaining > 0) {
+      const leftStep = Math.min(span, remaining);
+      ctx.lineTo(left, bottom - leftStep);
+    }
+
+    ctx.stroke();
+    ctx.restore();
+  }
+
   function stopRecordingStream() {
     if (recordingRaf) {
       cancelAnimationFrame(recordingRaf);
@@ -153,6 +201,10 @@
     recordingMediaRecorder = null;
     recordingCanvas = null;
     recordingCtx = null;
+    recordingFinalizing = false;
+    recordingFinalizeHoldUntilMs = 0;
+    recordingBlackoutUntilMs = 0;
+    freezeBrokenOnDrawing = false;
   }
 
   function wrapRecordingLines(ctx, text, widthLimit) {
@@ -265,6 +317,21 @@
   function drawRecordingFrame() {
     if (!isRecording4K || !recordingCtx || !recordingCanvas || !p5CanvasEl)
       return;
+
+    if (recordingFinalizing) {
+      const nowMs = performance.now();
+      if (nowMs >= recordingBlackoutUntilMs) {
+        stop4KRecording();
+        return;
+      }
+      if (nowMs >= recordingFinalizeHoldUntilMs) {
+        recordingCtx.fillStyle = "#000";
+        recordingCtx.fillRect(0, 0, RECORD_SIZE_PX, RECORD_SIZE_PX);
+        recordingRaf = requestAnimationFrame(drawRecordingFrame);
+        return;
+      }
+    }
+
     const canvasCssW = Math.max(1, p5CanvasEl.clientWidth || 1);
     const canvasCssH = Math.max(1, p5CanvasEl.clientHeight || 1);
     const ratioX = p5CanvasEl.width / canvasCssW;
@@ -331,9 +398,10 @@
       anchor: "bottom",
     });
 
-    recordingCtx.strokeStyle = "rgba(255,255,255,0.92)";
-    recordingCtx.lineWidth = 2;
-    recordingCtx.strokeRect(1, 1, RECORD_SIZE_PX - 2, RECORD_SIZE_PX - 2);
+    recordingCtx.strokeStyle = "rgba(255,255,255,0.1)";
+    recordingCtx.lineWidth = 1;
+    recordingCtx.strokeRect(0.5, 0.5, RECORD_SIZE_PX - 1, RECORD_SIZE_PX - 1);
+    drawRecordingStageProgress(recordingCtx, stageProgressRatio, RECORD_SIZE_PX);
 
     recordingRaf = requestAnimationFrame(drawRecordingFrame);
   }
@@ -342,6 +410,10 @@
     if (!recordingMediaRecorder) return;
     saveRecordingOnStop = save;
     isRecording4K = false;
+    recordingFinalizing = false;
+    recordingFinalizeHoldUntilMs = 0;
+    recordingBlackoutUntilMs = 0;
+    freezeBrokenOnDrawing = false;
     if (recordingMediaRecorder.state !== "inactive") {
       recordingMediaRecorder.stop();
     } else {
@@ -422,9 +494,13 @@
     };
 
     saveRecordingOnStop = true;
+    recordingFinalizing = false;
+    recordingFinalizeHoldUntilMs = 0;
+    recordingBlackoutUntilMs = 0;
+    freezeBrokenOnDrawing = false;
     isRecording4K = true;
     drawRecordingFrame();
-    recordingMediaRecorder.start(1000);
+    recordingMediaRecorder.start();
   }
 
   function toggle4KRecording() {
@@ -652,22 +728,6 @@
     if (phaseId === "opinions") return introOpinions;
     if (phaseId === "broken") return introBroken;
     return "";
-  }
-
-  function timelineProgressRatio(timeline, elapsedSec) {
-    if (!timeline?.notes?.length) return null;
-    const totalSec = timeline.notes.reduce((sum, note) => sum + noteDurSec(note), 0);
-    if (totalSec <= 0) return 0;
-
-    let t = Math.max(0, Number(elapsedSec) || 0);
-    if (timeline.loop) {
-      const cycle = totalSec + Math.max(0, timeline.restartPauseSec || 0);
-      if (cycle > 0) t %= cycle;
-      if (t >= totalSec) return 1;
-    } else {
-      t = Math.min(totalSec, t);
-    }
-    return Math.max(0, Math.min(1, t / totalSec));
   }
 
   $: records = rows.map(normalizeRecord);
@@ -1008,6 +1068,7 @@
     let lastFrameMs = 0;
     let focusIndex = 0;
     let brokenLastCompletedId = null;
+    const brokenCompletedIds = new Set();
     let viewStatePrev = "grid";
     let zoomStartCamera = null;
     let storyTokenSeen = storyAdvanceToken;
@@ -1029,6 +1090,9 @@
       lastFrameMs = nowMs;
       focusIndex = 0;
       brokenLastCompletedId = null;
+      noteSkimOffsetByTimeline.clear();
+      brokenCompletedIds.clear();
+      freezeBrokenOnDrawing = false;
       viewStatePrev = "grid";
       zoomStartCamera = null;
       traversalOffset = 0;
@@ -1601,7 +1665,9 @@
         phase.mode === "opinions" &&
         (preNoteViewState === "focus" || preNoteViewState === "zoom-in");
       const forcedFocusRecordId = anchorDrivenOpinionsMode
-        ? resolveNoteAnchorRecordId(preTimelineNote, ordered)
+        ? recordingFinalizing
+          ? ""
+          : resolveNoteAnchorRecordId(preTimelineNote, ordered)
         : "";
       const baseFocusAdvanceMs = Math.max(1, phase.focusAdvanceMs || 1);
       const focusNarrativeState =
@@ -1636,17 +1702,38 @@
       );
 
       if (!paused && (cycleCompleted || elapsed >= phaseTotalMs)) {
-        resetPhaseProgress(now);
         paused = true;
-        if (isRecording4K) stop4KRecording();
-        return;
+        if (isRecording4K) {
+          const lastId = traversal[traversal.length - 1] || "";
+          if (lastId) {
+            focusIndex = traversal.length - 1;
+            lockedAnchorRecordId = lastId;
+            anchorHoldMsRemaining = 3_600_000;
+            snapCameraToAnchor = true;
+            if (phase.mode === "broken") {
+              freezeBrokenOnDrawing = true;
+              brokenCompletedIds.add(lastId);
+              brokenLastCompletedId = lastId;
+            }
+          }
+          if (!recordingFinalizing) {
+            const t = performance.now();
+            recordingFinalizing = true;
+            recordingFinalizeHoldUntilMs = t + RECORD_FINAL_HOLD_MS;
+            recordingBlackoutUntilMs =
+              recordingFinalizeHoldUntilMs + RECORD_BLACKOUT_MS;
+          }
+        } else {
+          resetPhaseProgress(now);
+          return;
+        }
       }
 
       if (focusIndex >= traversal.length) focusIndex = 0;
       let focusBaseIndex = focusIndex;
       let focusBlend = 0;
       let focusSequenceRawIndex = 0;
-      let brokenFocusState = "image";
+      let brokenFocusState = freezeBrokenOnDrawing ? "drawing" : "image";
 
       if (viewState === "zoom-in") {
         const zoomAnchorIndex = zoomAnchorRecordId
@@ -1680,6 +1767,10 @@
           Math.floor((withinChain / brokenChainMs) * 3),
         );
         brokenFocusState = ["image", "text", "drawing"][stepIndex];
+        if (brokenFocusState === "drawing") {
+          const activeBrokenId = traversal[focusBaseIndex];
+          if (activeBrokenId) brokenCompletedIds.add(activeBrokenId);
+        }
         focusIndex = focusBaseIndex;
       } else if (
         !paused &&
@@ -1692,17 +1783,22 @@
         focusBaseIndex =
           (rawIndex + traversalOffset + traversal.length * 16) %
           traversal.length;
-        const localProgress = autoplayProgress - Math.floor(autoplayProgress);
-        const holdRatio = 0.54;
-        const holdHalf = holdRatio / 2;
-        if (localProgress <= holdHalf) {
+        const atLastTraversalItem = rawIndex >= traversal.length - 1;
+        if (atLastTraversalItem) {
+          // Prevent wrap-around drift from last card back to first card.
           focusBlend = 0;
-        } else if (localProgress >= 1 - holdHalf) {
-          focusBlend = 1;
         } else {
-          const moveT = (localProgress - holdHalf) / (1 - holdRatio);
-
-          focusBlend = moveT;
+          const localProgress = autoplayProgress - Math.floor(autoplayProgress);
+          const holdRatio = 0.54;
+          const holdHalf = holdRatio / 2;
+          if (localProgress <= holdHalf) {
+            focusBlend = 0;
+          } else if (localProgress >= 1 - holdHalf) {
+            focusBlend = 1;
+          } else {
+            const moveT = (localProgress - holdHalf) / (1 - holdRatio);
+            focusBlend = moveT;
+          }
         }
         focusIndex = focusBaseIndex;
       } else if (viewState !== "broken-seq") {
@@ -1714,7 +1810,8 @@
         (viewState === "focus" ||
           viewState === "zoom-in" ||
           viewState === "broken-seq") &&
-        !anchorDrivenOpinionsMode
+        !anchorDrivenOpinionsMode &&
+        !recordingFinalizing
       ) {
         const anchorIndex = traversal.indexOf(noteAnchorRecordId);
         if (anchorIndex >= 0) {
@@ -1732,8 +1829,8 @@
             snapCameraToAnchor = true;
           }
           if (viewState === "broken-seq") {
-            brokenFocusState = "image";
-            brokenLastCompletedId = null;
+            brokenFocusState = freezeBrokenOnDrawing ? "drawing" : "image";
+            if (!freezeBrokenOnDrawing) brokenLastCompletedId = null;
           }
         }
         noteAnchorRecordId = "";
@@ -1743,7 +1840,8 @@
       if (
         lockedAnchorRecordId &&
         anchorHoldMsRemaining > 0 &&
-        (viewState === "focus" || viewState === "broken-seq")
+        (viewState === "focus" || viewState === "broken-seq") &&
+        !recordingFinalizing
       ) {
         const lockedIndex = traversal.indexOf(lockedAnchorRecordId);
         if (lockedIndex >= 0) {
@@ -1751,8 +1849,8 @@
           focusIndex = lockedIndex;
           focusBlend = 0;
           if (viewState === "broken-seq") {
-            brokenFocusState = "image";
-            brokenLastCompletedId = null;
+            brokenFocusState = freezeBrokenOnDrawing ? "drawing" : "image";
+            if (!freezeBrokenOnDrawing) brokenLastCompletedId = null;
           }
         } else {
           lockedAnchorRecordId = "";
@@ -1926,6 +2024,7 @@
           drawCardMeta(record, entry, inFocusedMode && !focused ? 0.52 : alpha);
         } else if (viewState === "broken-seq") {
           const focused = record.id === focusId;
+          const completed = brokenCompletedIds.has(record.id);
           if (focused) {
             drawBrokenState(record, entry, brokenFocusState, 1, false);
             drawCardMeta(
@@ -1933,12 +2032,20 @@
               entry,
               1,
             );
-          } else if (
-            brokenLastCompletedId &&
-            record.id === brokenLastCompletedId
-          ) {
-            drawBrokenState(record, entry, "drawing", 0.22, true);
-            drawCardMeta(brokenMetaForState(record, "drawing"), entry, 0.34);
+          } else if (completed) {
+            const isLatestCompleted = record.id === brokenLastCompletedId;
+            drawBrokenState(
+              record,
+              entry,
+              "drawing",
+              isLatestCompleted ? 0.26 : 0.2,
+              true,
+            );
+            drawCardMeta(
+              brokenMetaForState(record, "drawing"),
+              entry,
+              isLatestCompleted ? 0.38 : 0.3,
+            );
           } else {
             drawBrokenState(record, entry, "image", 0.16, true);
             drawCardMeta(brokenMetaForState(record, "image"), entry, 0.24);
@@ -2114,21 +2221,6 @@
       }
       activeEditorialText = stripInlineImageIds(rawEditorialText);
       activeIntroText = introForPhase(phase.id);
-
-      const ratioFromNotes = timelineProgressRatio(
-        timelineForResolve,
-        effectiveElapsedSec,
-      );
-      if (ratioFromNotes !== null) {
-        if (timelineForResolve.elapsedMode === "view") {
-          stageProgressRatio =
-            noteStateForResolve === "grid"
-              ? ratioFromNotes * 0.5
-              : 0.5 + ratioFromNotes * 0.5;
-        } else {
-          stageProgressRatio = ratioFromNotes;
-        }
-      }
 
       phaseLabelForUi = `${phase.label} - ${noteStateForResolve}`;
     };
