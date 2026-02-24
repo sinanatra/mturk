@@ -448,7 +448,7 @@
       "mode": "time",
       "active": true,
       "durationSec": 32,
-      "text": "Workers are aware of this. They share information on forums. They warn each other about unreliable requesters. They decide which assignments to avoid.",
+      "text": "Long-term workers keep balancing convenience and extra income against bots, broken tasks, and lost time.",
       "anchorId": "opinions-10"
     },
     {
@@ -466,8 +466,8 @@
       "mode": "time",
       "active": true,
       "durationSec": 22,
-      "anchorId": "opinions-98",
-      "text": "This is visible in many answers."
+      "anchorId": "opinions-79",
+      "text": "This positive register is visible in many answers: flexibility, side income, autonomy."
     },
     {
       "id": "note-opinions-focus-10",
@@ -476,7 +476,7 @@
       "active": true,
       "durationSec": 9,
       "anchorId": "opinions-47",
-      "text": "Another recurring line stays positive and cautious, likely written to avoid risk."
+      "text": "A recurring line stays positive and careful, likely written to avoid risk."
     },
     {
       "id": "note-opinions-focus-11",
@@ -484,8 +484,8 @@
       "mode": "time",
       "active": true,
       "durationSec": 16,
-      "anchorId": "opinions-25",
-      "text": "The careful tone is part of platform survival."
+      "anchorId": "opinions-40",
+      "text": "Even praise is often framed in safe, generic language."
     },
     {
       "id": "note-opinions-focus-12",
@@ -493,8 +493,8 @@
       "mode": "time",
       "active": true,
       "durationSec": 24,
-      "text": "The same interface that allows me to reject submissions structures how workers respond. They write carefully. They anticipate evaluation. They adjust their tone.",
-      "anchorId": "opinions-15"
+      "text": "The interface still shapes tone: workers phrase criticism carefully, and cushion it with polite language.",
+      "anchorId": "opinions-121"
     },
     {
       "id": "note-broken-grid-1",
@@ -656,7 +656,7 @@
       "durationSec": 5,
       "text": "And within that recalibration, there is not only compliance, but agency."
     },
-     {
+    {
       "id": "note-broken-seq-17",
       "phase": "broken-broken-seq",
       "mode": "time",
