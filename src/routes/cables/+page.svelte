@@ -102,7 +102,7 @@
   const imageMeta = new Map();
   let imageMetaVersion = 0;
 
-  let focusPaddingRatio = 0.25;
+  let focusPaddingRatio = 0.50;
   let syncFocusToEditorial = true;
 
   function buildStageProgressPath(ratio) {
@@ -774,62 +774,17 @@
       )
       .sort((a, b) => a.orderHint - b.orderHint);
 
-    const bySourceImage = new Map();
-    for (const chain of completeChains) {
-      const key = chain.image?.imageUrl || chain.id;
-      if (!bySourceImage.has(key)) bySourceImage.set(key, []);
-      bySourceImage.get(key).push(chain);
-    }
-
-    brokenChains = [...bySourceImage.values()]
-      .map((group) => {
-        const ordered = [...group].sort((a, b) => a.orderHint - b.orderHint);
-        const base = ordered[0];
-
-        const mergedTexts = [
-          ...new Set(
-            ordered
-              .map((item) => normalizeText(item.text?.text || ""))
-              .filter(Boolean),
-          ),
-        ];
-        const mergedTextLocations = [
-          ...new Set(
-            ordered
-              .map((item) => normalizeText(item.text?.location || ""))
-              .filter(Boolean),
-          ),
-        ];
-        const mergedTextCountries = [
-          ...new Set(
-            ordered
-              .map((item) => normalizeText(item.text?.country || ""))
-              .filter(Boolean),
-          ),
-        ];
-
-        const textBase = base.text;
-        const textRecord = textBase
-          ? {
-              ...textBase,
-              text: mergedTexts.join(" // "),
-              location: mergedTextLocations.join(" + ") || textBase.location,
-              country: mergedTextCountries.join(" + ") || textBase.country,
-            }
-          : null;
-
-        const drawingRecord =
-          ordered.find((item) => item.drawing?.imageUrl)?.drawing ||
-          base.drawing;
-
-        return {
-          id: `merged-${base.id}`,
-          orderHint: Math.min(...ordered.map((item) => item.orderHint || 0)),
-          image: base.image,
-          text: textRecord,
-          drawing: drawingRecord,
-        };
-      })
+    // Keep one record per original chain (like /exausting): image -> text -> drawing.
+    // Do not collapse by source image, so editorial anchors can target exact chain IDs.
+    brokenChains = completeChains
+      .map((chain) => ({
+        id: `merged-${chain.id}`,
+        aliasIds: [`merged-${chain.id}`],
+        orderHint: chain.orderHint || 0,
+        image: chain.image,
+        text: chain.text,
+        drawing: chain.drawing,
+      }))
       .sort((a, b) => a.orderHint - b.orderHint);
   }
 
@@ -1006,8 +961,12 @@
     if (!note || !orderedRecords.length) return "";
     const explicitRecordId = normalizeText(note.anchorId || "");
     if (explicitRecordId) {
-      const recordIdSet = new Set(orderedRecords.map((item) => item.id));
-      if (recordIdSet.has(explicitRecordId)) return explicitRecordId;
+      const direct = orderedRecords.find((item) => item.id === explicitRecordId);
+      if (direct?.id) return direct.id;
+      const viaAlias = orderedRecords.find((item) =>
+        Array.isArray(item.aliasIds) && item.aliasIds.includes(explicitRecordId),
+      );
+      if (viaAlias?.id) return viaAlias.id;
     }
 
     const explicitImageId = normalizeText(note.anchorImageId || "");
@@ -1024,6 +983,10 @@
       const recordIdSet = new Set(orderedRecords.map((item) => item.id));
       for (const recordId of recordIds) {
         if (recordIdSet.has(recordId)) return recordId;
+        const viaAlias = orderedRecords.find((item) =>
+          Array.isArray(item.aliasIds) && item.aliasIds.includes(recordId),
+        );
+        if (viaAlias?.id) return viaAlias.id;
       }
     }
 
@@ -1083,6 +1046,10 @@
     let anchorHoldMsRemaining = 0;
     let lockedAnchorRecordId = "";
     let snapCameraToAnchor = false;
+    let brokenAnchorSettledNoteId = "";
+    let brokenAnchorSettledAtSec = 0;
+    let brokenFocusHoldOffsetSec = 0;
+    let brokenFocusHoldNoteId = "";
     let font;
 
     function resetPhaseProgress(nowMs = 0) {
@@ -1103,6 +1070,10 @@
       anchorHoldMsRemaining = 0;
       lockedAnchorRecordId = "";
       snapCameraToAnchor = false;
+      brokenAnchorSettledNoteId = "";
+      brokenAnchorSettledAtSec = 0;
+      brokenFocusHoldOffsetSec = 0;
+      brokenFocusHoldNoteId = "";
     }
 
     function jumpPhase(offset = 1, nowMs = 0) {
@@ -1180,7 +1151,10 @@
       const ds = camera.toScale - camera.scale;
 
       if (viewState === "focus" || viewState === "broken-seq") {
-        const followMs = Math.max(120, Math.min(1200, focusAdvanceMs * 0.22));
+        const followMs =
+          viewState === "broken-seq"
+            ? Math.max(900, Math.min(5200, focusAdvanceMs * 0.85))
+            : Math.max(120, Math.min(1200, focusAdvanceMs * 0.22));
         const posBlend = Math.min(1, dt / followMs);
         const scaleBlend = Math.min(1, dt / Math.max(90, followMs * 0.72));
         camera.x += dx * posBlend;
@@ -1646,9 +1620,16 @@
         noteSkimOffsetByTimeline.get(preTimeline.key) || 0;
       const preEffectiveElapsedSec = Math.max(
         0,
-        preBaseElapsedSec + preElapsedOffset,
+        preBaseElapsedSec +
+          preElapsedOffset +
+          (phase.mode === "broken" && preNoteViewState === "broken-seq"
+            ? brokenFocusHoldOffsetSec
+            : 0),
       );
       let preTimelineNote = null;
+      let preTimelineInfo = { index: -1, inPause: false };
+      let preElapsedInNoteSec = 0;
+      let preActiveNoteDurSec = 0;
       if (preTimeline.notes.length) {
         const preInfo = noteIndexAtElapsed(
           preTimeline.notes,
@@ -1658,17 +1639,31 @@
             restartPauseSec: preTimeline.restartPauseSec,
           },
         );
-        if (preInfo.index >= 0)
+        preTimelineInfo = preInfo;
+        if (preInfo.index >= 0) {
           preTimelineNote = preTimeline.notes[preInfo.index];
+          preActiveNoteDurSec = noteDurSec(preTimelineNote);
+          preElapsedInNoteSec =
+            preEffectiveElapsedSec -
+            noteStartSec(preTimeline.notes, preInfo.index);
+        }
       }
-      const anchorDrivenOpinionsMode =
-        phase.mode === "opinions" &&
-        (preNoteViewState === "focus" || preNoteViewState === "zoom-in");
-      const forcedFocusRecordId = anchorDrivenOpinionsMode
-        ? recordingFinalizing
+      const focusLikeState =
+        preNoteViewState === "focus" ||
+        preNoteViewState === "zoom-in" ||
+        preNoteViewState === "broken-seq";
+      const noteAnchorRecordForState =
+        recordingFinalizing || !focusLikeState
           ? ""
-          : resolveNoteAnchorRecordId(preTimelineNote, ordered)
+          : resolveNoteAnchorRecordId(preTimelineNote, ordered);
+      const anchorDrivenNoteMode = Boolean(noteAnchorRecordForState);
+      const forcedFocusRecordId = anchorDrivenNoteMode
+        ? noteAnchorRecordForState
         : "";
+      const brokenAnchoredNoteId =
+        phase.mode === "broken" && anchorDrivenNoteMode && preTimelineNote
+          ? preTimelineNote.id || ""
+          : "";
       const baseFocusAdvanceMs = Math.max(1, phase.focusAdvanceMs || 1);
       const focusNarrativeState =
         phase.mode === "broken" ? "broken-seq" : "focus";
@@ -1677,15 +1672,24 @@
         focusNarrativeState,
         0,
       );
-      const effectiveFocusAdvanceMs =
+      let effectiveFocusAdvanceMs =
         syncFocusToEditorial && focusNarrativeMs > 0
           ? Math.max(280, focusNarrativeMs / Math.max(1, traversal.length))
           : baseFocusAdvanceMs;
+      if (anchorDrivenNoteMode && preTimelineNote) {
+        effectiveFocusAdvanceMs = Math.max(
+          effectiveFocusAdvanceMs,
+          noteDurSec(preTimelineNote) * 1000,
+        );
+      }
+      if (phase.mode === "broken") {
+        effectiveFocusAdvanceMs = Math.max(effectiveFocusAdvanceMs, 3000);
+      }
       const brokenChainMs = Math.max(1, effectiveFocusAdvanceMs);
-      const focusCycleMs = Math.max(
-        1,
-        traversal.length * effectiveFocusAdvanceMs,
-      );
+      const focusCycleMs =
+        syncFocusToEditorial && focusNarrativeMs > 0
+          ? Math.max(1, focusNarrativeMs)
+          : Math.max(1, traversal.length * effectiveFocusAdvanceMs);
       const autoplayProgress =
         phase.mode === "broken"
           ? 0
@@ -1704,16 +1708,27 @@
       if (!paused && (cycleCompleted || elapsed >= phaseTotalMs)) {
         paused = true;
         if (isRecording4K) {
-          const lastId = traversal[traversal.length - 1] || "";
-          if (lastId) {
-            focusIndex = traversal.length - 1;
-            lockedAnchorRecordId = lastId;
+          const safeFocusIndex = Math.max(
+            0,
+            Math.min(traversal.length - 1, focusIndex),
+          );
+          const holdId =
+            phase.mode === "broken"
+              ? traversal[traversal.length - 1] || ""
+              : forcedFocusRecordId ||
+                lockedAnchorRecordId ||
+                traversal[safeFocusIndex] ||
+                traversal[traversal.length - 1] ||
+                "";
+          if (holdId) {
+            focusIndex = Math.max(0, traversal.indexOf(holdId));
+            lockedAnchorRecordId = holdId;
             anchorHoldMsRemaining = 3_600_000;
             snapCameraToAnchor = true;
             if (phase.mode === "broken") {
               freezeBrokenOnDrawing = true;
-              brokenCompletedIds.add(lastId);
-              brokenLastCompletedId = lastId;
+              brokenCompletedIds.add(holdId);
+              brokenLastCompletedId = holdId;
             }
           }
           if (!recordingFinalizing) {
@@ -1747,31 +1762,38 @@
           focusIndex = 0;
         }
       } else if (!paused && viewState === "broken-seq") {
-        const seqMs = Math.max(0, focusElapsedMs);
-        const rawIndex = Math.floor(seqMs / brokenChainMs) % traversal.length;
-        focusSequenceRawIndex = rawIndex;
-        focusBaseIndex =
-          (rawIndex + traversalOffset + traversal.length * 16) %
-          traversal.length;
-        if (seqMs >= brokenChainMs && traversal.length > 1) {
-          brokenLastCompletedId =
-            traversal[
-              (focusBaseIndex - 1 + traversal.length) % traversal.length
-            ];
+        if (phase.mode === "broken" && anchorDrivenNoteMode && forcedFocusRecordId) {
+          const forcedIndex = traversal.indexOf(forcedFocusRecordId);
+          if (forcedIndex >= 0) {
+            focusSequenceRawIndex = forcedIndex;
+            focusBaseIndex = forcedIndex;
+            focusIndex = forcedIndex;
+            brokenLastCompletedId = null;
+            brokenFocusState = freezeBrokenOnDrawing ? "drawing" : "image";
+          }
         } else {
-          brokenLastCompletedId = null;
+          const seqMs = Math.max(0, focusElapsedMs);
+          const rawIndex = Math.floor(seqMs / brokenChainMs) % traversal.length;
+          focusSequenceRawIndex = rawIndex;
+          focusBaseIndex =
+            (rawIndex + traversalOffset + traversal.length * 16) %
+            traversal.length;
+          if (seqMs >= brokenChainMs && traversal.length > 1) {
+            brokenLastCompletedId =
+              traversal[
+                (focusBaseIndex - 1 + traversal.length) % traversal.length
+              ];
+          } else {
+            brokenLastCompletedId = null;
+          }
+          const withinChain = seqMs % brokenChainMs;
+          const stepIndex = Math.min(
+            2,
+            Math.floor((withinChain / brokenChainMs) * 3),
+          );
+          brokenFocusState = ["image", "text", "drawing"][stepIndex];
+          focusIndex = focusBaseIndex;
         }
-        const withinChain = seqMs % brokenChainMs;
-        const stepIndex = Math.min(
-          2,
-          Math.floor((withinChain / brokenChainMs) * 3),
-        );
-        brokenFocusState = ["image", "text", "drawing"][stepIndex];
-        if (brokenFocusState === "drawing") {
-          const activeBrokenId = traversal[focusBaseIndex];
-          if (activeBrokenId) brokenCompletedIds.add(activeBrokenId);
-        }
-        focusIndex = focusBaseIndex;
       } else if (
         !paused &&
         viewState === "focus" &&
@@ -1810,7 +1832,7 @@
         (viewState === "focus" ||
           viewState === "zoom-in" ||
           viewState === "broken-seq") &&
-        !anchorDrivenOpinionsMode &&
+        !anchorDrivenNoteMode &&
         !recordingFinalizing
       ) {
         const anchorIndex = traversal.indexOf(noteAnchorRecordId);
@@ -1841,6 +1863,7 @@
         lockedAnchorRecordId &&
         anchorHoldMsRemaining > 0 &&
         (viewState === "focus" || viewState === "broken-seq") &&
+        viewState !== "zoom-in" &&
         !recordingFinalizing
       ) {
         const lockedIndex = traversal.indexOf(lockedAnchorRecordId);
@@ -1961,8 +1984,86 @@
         const cameraFollowMs =
           forcedFocusRecordId && viewState === "focus"
             ? Math.max(2200, effectiveFocusAdvanceMs * 3.2)
+            : phase.mode === "broken" &&
+                viewState === "broken-seq" &&
+                anchorDrivenNoteMode
+              ? Math.max(900, Math.min(2200, effectiveFocusAdvanceMs * 0.28))
             : effectiveFocusAdvanceMs;
         tickCamera(now, viewState, cameraFollowMs);
+      }
+
+      // In anchored broken mode, do not advance image->text->drawing until
+      // camera is actually settled on the target card.
+      if (
+        phase.mode === "broken" &&
+        viewState === "broken-seq" &&
+        anchorDrivenNoteMode &&
+        preTimelineInfo.index >= 0 &&
+        preTimelineNote &&
+        !freezeBrokenOnDrawing
+      ) {
+        const anchoredNoteId = preTimelineNote.id || "";
+        const noteText = (preTimelineNote.text || "").trim();
+        if (brokenFocusHoldNoteId !== anchoredNoteId) {
+          brokenFocusHoldNoteId = anchoredNoteId;
+        }
+        if (brokenAnchorSettledNoteId !== anchoredNoteId) {
+          brokenAnchorSettledNoteId = anchoredNoteId;
+          brokenAnchorSettledAtSec = -1;
+        }
+        const pxDist =
+          Math.hypot(camera.x - target.x, camera.y - target.y) *
+          Math.max(camera.scale, 0.0001);
+        const scaleDist = Math.abs(camera.scale - target.scale);
+        const arrived = pxDist <= 90 && scaleDist <= 0.07;
+
+        // Freeze note-clock while camera is still traveling to anchor.
+        if (!arrived && !paused) {
+          brokenFocusHoldOffsetSec -= frameDeltaMs / 1000;
+        }
+
+        if (!noteText) {
+          brokenFocusState = "drawing";
+        } else if (brokenAnchorSettledAtSec < 0) {
+          if (arrived) brokenAnchorSettledAtSec = preElapsedInNoteSec;
+          brokenFocusState = "image";
+        } else {
+          const elapsedAfterSettle = Math.max(
+            0,
+            preElapsedInNoteSec - brokenAnchorSettledAtSec,
+          );
+          const remainingAfterSettle = Math.max(
+            0.001,
+            preActiveNoteDurSec - brokenAnchorSettledAtSec,
+          );
+          const imageHoldSec = Math.max(
+            0.4,
+            Math.min(0.9, remainingAfterSettle * 0.1),
+          );
+          const drawingReserveSec = Math.max(
+            1.8,
+            remainingAfterSettle * 0.34,
+          );
+          const textEndSec = Math.max(
+            imageHoldSec + 1.6,
+            remainingAfterSettle - drawingReserveSec,
+          );
+          if (elapsedAfterSettle < imageHoldSec) brokenFocusState = "image";
+          else if (elapsedAfterSettle < textEndSec) brokenFocusState = "text";
+          else brokenFocusState = "drawing";
+        }
+      } else {
+        brokenAnchorSettledNoteId = "";
+        brokenAnchorSettledAtSec = 0;
+        brokenFocusHoldNoteId = "";
+        if (phase.mode !== "broken" || viewState !== "broken-seq") {
+          brokenFocusHoldOffsetSec = 0;
+        }
+      }
+
+      if (viewState === "broken-seq" && brokenFocusState === "drawing") {
+        const activeBrokenId = traversal[focusBaseIndex];
+        if (activeBrokenId) brokenCompletedIds.add(activeBrokenId);
       }
 
       s.push();
@@ -2175,9 +2276,13 @@
 
       const elapsedOffset =
         noteSkimOffsetByTimeline.get(timelineForResolve.key) || 0;
+      const brokenHoldOffsetForResolve =
+        phase.mode === "broken" && noteStateForResolve === "broken-seq"
+          ? brokenFocusHoldOffsetSec
+          : 0;
       const effectiveElapsedSec = Math.max(
         0,
-        baseElapsedForResolve + elapsedOffset,
+        baseElapsedForResolve + elapsedOffset + brokenHoldOffsetForResolve,
       );
       const phaseElapsedForNote =
         timelineForResolve.elapsedMode === "phase"
@@ -2198,7 +2303,7 @@
         viewElapsedForNote,
       );
       const rawEditorialText = activeNote?.text || "";
-      if (anchorDrivenOpinionsMode) {
+      if (anchorDrivenNoteMode) {
         noteAnchorRecordId = "";
         noteAnchorHoldMs = 0;
         lastResolvedNoteId = "";
