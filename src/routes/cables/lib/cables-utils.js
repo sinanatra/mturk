@@ -286,6 +286,60 @@ export function normalizeNote(raw, index) {
   const normalizedTargetId = normalizeText(raw.targetId || "");
   const normalizedAnchorId = normalizeText(raw.anchorId || "");
   const normalizedAnchorImageId = normalizeText(raw.anchorImageId || "");
+  const normalizeImagePath = (value) => {
+    const rawPath = String(value || "").trim();
+    if (!rawPath) return "";
+    if (/^https?:\/\//i.test(rawPath)) return rawPath;
+    if (rawPath.startsWith("/")) return rawPath;
+    return `/${rawPath}`;
+  };
+  const numberOr = (value, fallback) => {
+    const n = Number(value);
+    return Number.isFinite(n) ? n : fallback;
+  };
+  const numberOrNull = (value) => {
+    const n = Number(value);
+    return Number.isFinite(n) ? n : null;
+  };
+  const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
+  const zoomToRaw = raw.zoomTo && typeof raw.zoomTo === "object" ? raw.zoomTo : null;
+  const zoomX = numberOrNull(zoomToRaw?.x ?? raw.zoomX);
+  const zoomY = numberOrNull(zoomToRaw?.y ?? raw.zoomY);
+  const zoomScale = numberOrNull(zoomToRaw?.scale ?? raw.zoomScale);
+  const zoomTo =
+    zoomX !== null || zoomY !== null || zoomScale !== null
+      ? {
+          x: zoomX,
+          y: zoomY,
+          scale: zoomScale,
+        }
+      : null;
+  const visualRaw = raw.visual && typeof raw.visual === "object" ? raw.visual : null;
+  const visual = visualRaw
+    ? {
+        mode: normalizeText(visualRaw.mode || ""),
+        images: Array.isArray(visualRaw.images)
+          ? visualRaw.images.map(normalizeImagePath).filter(Boolean)
+          : [],
+        widthRatio: clamp(numberOr(visualRaw.widthRatio, 1), 0.05, 1),
+        heightRatio: clamp(numberOr(visualRaw.heightRatio, 1), 0.05, 1),
+        fadeInMs: Math.max(0, numberOr(visualRaw.fadeInMs, 220)),
+        hideGrid: visualRaw.hideGrid !== false,
+        crossfade: visualRaw.crossfade !== false,
+        collage: Array.isArray(visualRaw.collage)
+          ? visualRaw.collage
+              .map((entry) => ({
+                src: normalizeImagePath(entry?.src || ""),
+                x: clamp(numberOr(entry?.x, 0.5), 0, 1),
+                y: clamp(numberOr(entry?.y, 0.5), 0, 1),
+                w: clamp(numberOr(entry?.w, 0.4), 0.05, 1),
+                h: clamp(numberOr(entry?.h, 0), 0, 1),
+                rotateDeg: clamp(numberOr(entry?.rotateDeg, 0), -45, 45),
+              }))
+              .filter((entry) => entry.src)
+          : [],
+      }
+    : null;
   const normalizedMode =
     raw.mode === "target" || (normalizedTargetId && raw.mode !== "time")
       ? "target"
@@ -302,6 +356,8 @@ export function normalizeNote(raw, index) {
     targetStep: normalizeText(raw.targetStep || "any") || "any",
     anchorId: normalizedAnchorId,
     anchorImageId: normalizedAnchorImageId,
+    zoomTo,
+    visual,
     durationSec: Number.isFinite(Number(raw.durationSec))
       ? Math.max(0.5, Number(raw.durationSec))
       : 10,

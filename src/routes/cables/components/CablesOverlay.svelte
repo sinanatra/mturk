@@ -45,7 +45,7 @@
     padding: 0;
     display: inline;
     font-size: clamp(10px, 1.45vw, 15px);
-    line-height: 0.86;
+    line-height: 0.98;
     color: #ffffff;
     background: rgb(0, 0, 0);
     text-align: center;
@@ -73,7 +73,7 @@
     padding: 0;
     display: inline;
     font-size: clamp(15px, 1.25vw, 21px);
-    line-height: 0.9;
+    line-height: 1.02;
     text-align: center;
     white-space: pre-line;
     color: #fff9d2;

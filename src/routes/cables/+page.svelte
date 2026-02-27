@@ -73,6 +73,7 @@
   let stageProgressPath = "M 0 0";
 
   let editorialNotes = [];
+  let editorialVisualImageUrls = [];
   let introWindows = "";
   let introScreens = "";
   let introOpinions = "";
@@ -82,6 +83,9 @@
   const RECORD_FPS = 30;
   const RECORD_FINAL_HOLD_MS = 180;
   const RECORD_BLACKOUT_MS = 3000;
+  const GRID_FADE_MULTIPLIER = 200;
+  const GRID_REVEAL_SPEED_MULTIPLIER = 3;
+  const FOCUS_PADDING_RATIO = 0.5;
 
   let p5CanvasEl = null;
   let isRecording4K = false;
@@ -102,7 +106,7 @@
   const imageMeta = new Map();
   let imageMetaVersion = 0;
 
-  let focusPaddingRatio = 0.50;
+  let authoringHint = "";
   let syncFocusToEditorial = true;
 
   function buildStageProgressPath(ratio) {
@@ -550,8 +554,26 @@
   }
 
   function applyEditorialPayload(payload) {
+    const refreshEditorialVisualImages = () => {
+      const urls = new Set();
+      for (const note of editorialNotes) {
+        const images = note?.visual?.images;
+        if (!Array.isArray(images)) continue;
+        for (const url of images) {
+          if (url) urls.add(url);
+        }
+        const collage = note?.visual?.collage;
+        if (!Array.isArray(collage)) continue;
+        for (const item of collage) {
+          if (item?.src) urls.add(item.src);
+        }
+      }
+      editorialVisualImageUrls = [...urls];
+    };
+
     if (Array.isArray(payload)) {
       editorialNotes = payload.map((note, index) => normalizeNote(note, index));
+      refreshEditorialVisualImages();
       return;
     }
     if (!payload || typeof payload !== "object") return;
@@ -560,6 +582,7 @@
       editorialNotes = payload.notes.map((note, index) =>
         normalizeNote(note, index),
       );
+      refreshEditorialVisualImages();
     }
 
     const intro = payload.intro;
@@ -1051,6 +1074,8 @@
     let brokenAnchorSettledAtSec = 0;
     let brokenFocusHoldOffsetSec = 0;
     let brokenFocusHoldNoteId = "";
+    let lastVisualNoteId = "";
+    let lastVisualSignature = "";
     let font;
 
     function resetPhaseProgress(nowMs = 0) {
@@ -1075,6 +1100,8 @@
       brokenAnchorSettledAtSec = 0;
       brokenFocusHoldOffsetSec = 0;
       brokenFocusHoldNoteId = "";
+      lastVisualNoteId = "";
+      lastVisualSignature = "";
     }
 
     function jumpPhase(offset = 1, nowMs = 0) {
@@ -1209,6 +1236,163 @@
       s.image(image, x, y, drawW, drawH);
       s.noTint();
       ctx.restore();
+    }
+
+    function drawStageImageCover(image, stageX, stageY, stageSize, alpha = 1) {
+      if (!image) return;
+      const fit = Math.max(stageSize / image.width, stageSize / image.height);
+      const drawW = image.width * fit;
+      const drawH = image.height * fit;
+      const x = stageX + (stageSize - drawW) / 2;
+      const y = stageY + (stageSize - drawH) / 2;
+
+      const ctx = s.drawingContext;
+      ctx.save();
+      ctx.globalAlpha = Math.max(0, Math.min(1, alpha));
+      s.image(image, x, y, drawW, drawH);
+      ctx.restore();
+    }
+
+    function drawStageImageContained(
+      image,
+      stageX,
+      stageY,
+      stageSize,
+      widthRatio = 0.6,
+      heightRatio = 1,
+      alpha = 1,
+    ) {
+      if (!image) return;
+      const maxW = stageSize * Math.max(0.05, Math.min(1, widthRatio));
+      const maxH = stageSize * Math.max(0.05, Math.min(1, heightRatio));
+      const fit = Math.min(maxW / image.width, maxH / image.height);
+      const drawW = image.width * fit;
+      const drawH = image.height * fit;
+      const x = stageX + (stageSize - drawW) / 2;
+      const y = stageY + (stageSize - drawH) / 2;
+
+      const ctx = s.drawingContext;
+      ctx.save();
+      ctx.globalAlpha = Math.max(0, Math.min(1, alpha));
+      s.image(image, x, y, drawW, drawH);
+      ctx.restore();
+    }
+
+    function drawNoteVisual(note, elapsedInNoteSec, noteDurationSec, stageX, stageY, stageSize) {
+      const visual = note?.visual;
+      if (!visual || typeof visual !== "object") return { drawn: false, hideGrid: false };
+
+      const mode = String(visual.mode || "").trim().toLowerCase();
+      const shouldHideGrid = visual.hideGrid !== false;
+      if (!mode) return { drawn: false, hideGrid: shouldHideGrid };
+      const noteId = String(note?.id || "");
+      const visualSignature =
+        mode === "image" || mode === "single-image"
+          ? `${mode}|${(visual.images || []).join(",")}|${visual.widthRatio}|${visual.heightRatio}`
+          : mode === "collage"
+            ? `${mode}|${(visual.collage || [])
+                .map((item) => `${item.src}:${item.x}:${item.y}:${item.w}:${item.h}:${item.rotateDeg}`)
+                .join(";")}`
+            : `${mode}|${(visual.images || []).join(",")}`;
+
+      s.push();
+      s.rectMode(s.CORNER);
+      s.noStroke();
+      s.fill(0, 0, 0, 1);
+      s.rect(stageX, stageY, stageSize, stageSize);
+      s.pop();
+
+      if (mode === "blackout" || mode === "black") {
+        return { drawn: true, hideGrid: shouldHideGrid };
+      }
+
+      const totalMs = Math.max(
+        1,
+        Math.round(Math.max(0.5, noteDurationSec || 0.5) * 1000),
+      );
+      const elapsedMs = Math.max(
+        0,
+        Math.min(
+          totalMs - 1,
+          Math.round(Math.max(0, elapsedInNoteSec || 0) * 1000),
+        ),
+      );
+      const sameVisualAsPreviousNote =
+        noteId &&
+        noteId !== lastVisualNoteId &&
+        visualSignature &&
+        visualSignature === lastVisualSignature;
+      const fadeInMs = sameVisualAsPreviousNote
+        ? 0
+        : Math.max(0, Number(visual.fadeInMs) || 0);
+      const fadeInAlpha =
+        fadeInMs > 0
+          ? Math.max(0, Math.min(1, elapsedMs / fadeInMs))
+          : 1;
+
+      if (mode === "image" || mode === "single-image") {
+        const src = Array.isArray(visual.images) ? visual.images[0] : "";
+        const image = ensureImage(s, src);
+        drawStageImageContained(
+          image,
+          stageX,
+          stageY,
+          stageSize,
+          Number(visual.widthRatio) || 0.6,
+          Number(visual.heightRatio) || 1,
+          fadeInAlpha,
+        );
+        lastVisualNoteId = noteId;
+        lastVisualSignature = visualSignature;
+        return { drawn: true, hideGrid: shouldHideGrid };
+      }
+
+      if (mode === "collage") {
+        const items = Array.isArray(visual.collage) ? visual.collage : [];
+        for (const item of items) {
+          const image = ensureImage(s, item.src);
+          if (!image) continue;
+          const maxW = stageSize * (Number(item.w) || 0.35);
+          const maxH = stageSize * (Number(item.h) > 0 ? Number(item.h) : 0.42);
+          const fit = Math.min(maxW / image.width, maxH / image.height);
+          const drawW = image.width * fit;
+          const drawH = image.height * fit;
+          const cx = stageX + stageSize * (Number(item.x) || 0.5);
+          const cy = stageY + stageSize * (Number(item.y) || 0.5);
+          s.push();
+          s.translate(cx, cy);
+          s.rotate(s.radians(Number(item.rotateDeg) || 0));
+          const ctx = s.drawingContext;
+          ctx.save();
+          ctx.globalAlpha = fadeInAlpha;
+          s.image(image, -drawW / 2, -drawH / 2, drawW, drawH);
+          ctx.restore();
+          s.pop();
+        }
+        lastVisualNoteId = noteId;
+        lastVisualSignature = visualSignature;
+        return { drawn: true, hideGrid: shouldHideGrid };
+      }
+
+      if (mode !== "images" && mode !== "stage-images") {
+        return { drawn: true, hideGrid: shouldHideGrid };
+      }
+
+      const frames = Array.isArray(visual.images) ? visual.images : [];
+      if (!frames.length) return { drawn: true, hideGrid: shouldHideGrid };
+
+      const segmentMs = Math.max(1, totalMs / frames.length);
+      const index = Math.min(frames.length - 1, Math.floor(elapsedMs / segmentMs));
+      const localMs = elapsedMs - index * segmentMs;
+      const useFade = visual.crossfade !== false;
+      const fadeMs = Math.max(80, Math.min(220, segmentMs * 0.18));
+      const alpha = useFade ? Math.max(0, Math.min(1, localMs / fadeMs)) : 1;
+
+      const current = ensureImage(s, frames[index]);
+      drawStageImageCover(current, stageX, stageY, stageSize, alpha);
+      lastVisualNoteId = noteId;
+      lastVisualSignature = visualSignature;
+      return { drawn: true, hideGrid: shouldHideGrid };
     }
 
     function drawCardMeta(record, entry, alpha = 1) {
@@ -1501,6 +1685,58 @@
           return false;
         }
 
+        if (s.key === "c" || s.key === "C") {
+          const stageSize = Math.min(s.width, s.height);
+          const stageX = (s.width - stageSize) / 2;
+          const stageY = (s.height - stageSize) / 2;
+          if (
+            s.mouseX < stageX ||
+            s.mouseX > stageX + stageSize ||
+            s.mouseY < stageY ||
+            s.mouseY > stageY + stageSize
+          ) {
+            authoringHint = "Move cursor inside stage, then press C";
+            return false;
+          }
+          if (!camera.initialized || !Number.isFinite(camera.scale) || camera.scale === 0) {
+            authoringHint = "Camera not ready yet";
+            return false;
+          }
+
+          const worldX = camera.x + (s.mouseX - (stageX + stageSize / 2)) / camera.scale;
+          const worldY = camera.y + (s.mouseY - (stageY + stageSize / 2)) / camera.scale;
+          const roundedX = Number(worldX.toFixed(2));
+          const roundedY = Number(worldY.toFixed(2));
+          const zoomSnippet = `"zoomTo": { "x": ${roundedX}, "y": ${roundedY} }`;
+
+          const phase = activePhase();
+          const { ordered, layout } = phaseCollection(phase);
+          let nearestId = "";
+          let nearestDist = Infinity;
+          for (const record of ordered) {
+            const entry = layout.map.get(record.id);
+            if (!entry) continue;
+            const dist = Math.hypot(entry.x - worldX, entry.y - worldY);
+            if (dist < nearestDist) {
+              nearestDist = dist;
+              nearestId = record.id;
+            }
+          }
+
+          const nearestSuffix = nearestId ? ` nearest=${nearestId}` : "";
+          authoringHint = `${zoomSnippet}${nearestSuffix}`;
+          if (browser && navigator?.clipboard?.writeText) {
+            navigator.clipboard.writeText(zoomSnippet).catch(() => {});
+          }
+          console.info("[cables] zoom authoring", {
+            x: roundedX,
+            y: roundedY,
+            nearestAnchorId: nearestId || null,
+            snippet: zoomSnippet,
+          });
+          return false;
+        }
+
         return true;
       };
     };
@@ -1538,6 +1774,15 @@
         lastFrameMs = now;
         return;
       }
+      if (type === "image") {
+        for (const record of ordered) ensureImage(s, record.imageUrl);
+      } else if (type === "broken") {
+        for (const chain of ordered) {
+          if (chain?.image?.imageUrl) ensureImage(s, chain.image.imageUrl);
+          if (chain?.drawing?.imageUrl) ensureImage(s, chain.drawing.imageUrl);
+        }
+      }
+      for (const imageUrl of editorialVisualImageUrls) ensureImage(s, imageUrl);
 
       if (lastFrameMs === 0) lastFrameMs = now;
       const frameDeltaMs = Math.max(0, Math.min(120, now - lastFrameMs));
@@ -1562,6 +1807,8 @@
         phase.overviewMs || 0,
       );
       const zoomInMs = Math.max(0, phase.zoomInMs || 0);
+      const gridRevealStartMs = 0;
+      const gridRevealMs = Math.max(1, overviewMs);
 
       const viewState =
         elapsed < overviewMs
@@ -1936,34 +2183,38 @@
         stageSize / layout.worldHeight,
       );
       const blendedFocusW =
-        focusEntry.w +
-        (nextFocusEntry.w - focusEntry.w) *
-          (viewState === "focus" ? focusBlend : 0);
-      const blendedFocusH =
-        focusEntry.h +
-        (nextFocusEntry.h - focusEntry.h) *
-          (viewState === "focus" ? focusBlend : 0);
-      const minFocusFactor = 1 / Math.max(0.35, 1 - focusPaddingRatio);
+        viewState === "focus" && !paused
+          ? focusEntry.w + (nextFocusEntry.w - focusEntry.w) * focusBlend
+          : focusEntry.w;
+      const minFocusFactor = 1 / Math.max(0.35, 1 - FOCUS_PADDING_RATIO);
       const minFocusScale = fitScale * minFocusFactor;
-      const rawFocusScale =
-        type === "text"
-          ? (stageSize * (1 - focusPaddingRatio)) / Math.max(focusEntry.w, 1)
-          : Math.min(
-              (stageSize * (1 - focusPaddingRatio)) /
-                Math.max(blendedFocusW, 1),
-              (stageSize * (1 - focusPaddingRatio)) /
-                Math.max(blendedFocusH, 1),
-            );
-      const focusScale = Math.max(minFocusScale, rawFocusScale);
+      const baseFocusScale =
+        (stageSize * (1 - FOCUS_PADDING_RATIO)) / Math.max(blendedFocusW, 1);
+      const noteZoomTo =
+        anchorDrivenNoteMode &&
+        preTimelineNote?.zoomTo &&
+        typeof preTimelineNote.zoomTo === "object"
+          ? preTimelineNote.zoomTo
+          : null;
+      const noteZoomScaleRaw = Number(noteZoomTo?.scale);
+      const noteZoomScale =
+        Number.isFinite(noteZoomScaleRaw) && noteZoomScaleRaw > 0
+          ? noteZoomScaleRaw
+          : 1;
+      const focusScale = Math.max(minFocusScale, baseFocusScale * noteZoomScale);
 
-      const driftX =
+      const driftXBase =
         viewState === "focus" && !paused
           ? focusEntry.x + (nextFocusEntry.x - focusEntry.x) * focusBlend
           : focusEntry.x;
-      const driftY =
+      const driftYBase =
         viewState === "focus" && !paused
           ? focusEntry.y + (nextFocusEntry.y - focusEntry.y) * focusBlend
           : focusEntry.y;
+      const noteZoomXRaw = Number(noteZoomTo?.x);
+      const noteZoomYRaw = Number(noteZoomTo?.y);
+      const driftX = Number.isFinite(noteZoomXRaw) ? noteZoomXRaw : driftXBase;
+      const driftY = Number.isFinite(noteZoomYRaw) ? noteZoomYRaw : driftYBase;
 
       const target = {
         x: viewState === "grid" ? 0 : driftX,
@@ -2085,99 +2336,196 @@
         if (activeBrokenId) brokenCompletedIds.add(activeBrokenId);
       }
 
-      s.push();
-      s.drawingContext.save();
-      s.drawingContext.beginPath();
-      s.drawingContext.rect(stageX, stageY, stageSize, stageSize);
-      s.drawingContext.clip();
-
-      s.translate(
-        stageX + stageSize / 2 - camera.x * camera.scale,
-        stageY + stageSize / 2 - camera.y * camera.scale,
+      const gridVisualState =
+        viewState === "grid"
+          ? drawNoteVisual(
+              preTimelineNote,
+              preElapsedInNoteSec,
+              preActiveNoteDurSec,
+              stageX,
+              stageY,
+              stageSize,
+            )
+          : { drawn: false, hideGrid: false };
+      const showGridCards = !(
+        viewState === "grid" &&
+        gridVisualState.drawn &&
+        gridVisualState.hideGrid
       );
-      s.scale(camera.scale);
 
-      const halfVisible = stageSize / (2 * camera.scale);
-      const minX = camera.x - halfVisible - layout.maxW;
-      const maxX = camera.x + halfVisible + layout.maxW;
-      const minY = camera.y - halfVisible - layout.maxH;
-      const maxY = camera.y + halfVisible + layout.maxH;
+      if (showGridCards) {
+        const gridRevealProgressFromNotes = (notes, elapsedSec) => {
+          if (!Array.isArray(notes) || !notes.length) return null;
+          let totalVisibleSec = 0;
+          let visibleElapsedSec = 0;
+          let remaining = Math.max(0, elapsedSec);
+          for (const note of notes) {
+            const dur = noteDurSec(note);
+            const visible = !(note?.visual && note.visual.hideGrid);
+            if (visible) totalVisibleSec += dur;
+            if (remaining <= 0) continue;
+            const segment = Math.min(dur, remaining);
+            if (visible) visibleElapsedSec += segment;
+            remaining -= segment;
+          }
+          if (totalVisibleSec <= 0) return 0;
+          return Math.max(0, Math.min(1, visibleElapsedSec / totalVisibleSec));
+        };
 
-      for (let i = 0; i < ordered.length; i += 1) {
-        const record = ordered[i];
-        const entry = layout.map.get(record.id);
-        if (!entry) continue;
-        if (
-          entry.x < minX ||
-          entry.x > maxX ||
-          entry.y < minY ||
-          entry.y > maxY
-        )
-          continue;
+        const noteDrivenReveal =
+          viewState === "grid"
+            ? gridRevealProgressFromNotes(
+                preTimeline.notes,
+                preEffectiveElapsedSec,
+              )
+            : null;
+        const revealProgressRaw =
+          viewState === "grid"
+            ? noteDrivenReveal ??
+              Math.max(
+                0,
+                Math.min(1, (elapsed - gridRevealStartMs) / gridRevealMs),
+              )
+            : 1;
+        const revealProgress =
+          viewState === "grid"
+            ? Math.max(
+                0,
+                Math.min(1, revealProgressRaw * GRID_REVEAL_SPEED_MULTIPLIER),
+              )
+            : 1;
+        const revealCount =
+          viewState === "grid"
+            ? Math.max(
+                0,
+                Math.min(
+                  ordered.length,
+                  Math.ceil(revealProgress * ordered.length),
+                ),
+              )
+            : ordered.length;
+        const revealOrder = traversal.length
+          ? traversal
+          : ordered.map((item) => item.id);
+        const revealRank = new Map(
+          revealOrder.map((id, index) => [id, index]),
+        );
+        const revealFloat = revealProgress * ordered.length;
 
-        if (type === "image") {
-          const inFocusedMode =
-            viewState === "focus" || viewState === "zoom-in";
-          const focused = inFocusedMode ? record.id === renderedFocusId : false;
-          const alpha = inFocusedMode && !focused ? 0.2 : 1;
-          const desaturate = !focused;
-          drawImage(record.imageUrl, entry, alpha, desaturate);
-          drawCardMeta(record, entry, alpha);
-        } else if (type === "text") {
-          const inFocusedMode =
-            viewState === "focus" || viewState === "zoom-in";
-          const focused = inFocusedMode ? record.id === renderedFocusId : false;
-          const alpha = inFocusedMode && !focused ? 0.86 : 1;
-          const textColor =
-            inFocusedMode && !focused ? [0, 0, 56] : [0, 0, 100];
-          drawText(
-            record.text,
-            entry,
-            false,
-            alpha,
-            "center",
-            OPINIONS_TEXT_STYLE.sizeScale,
-            OPINIONS_TEXT_STYLE.excerpt,
-            OPINIONS_TEXT_STYLE.leadingRatio,
-            textColor,
-          );
-          drawCardMeta(record, entry, inFocusedMode && !focused ? 0.52 : alpha);
-        } else if (viewState === "broken-seq") {
-          const focused = record.id === focusId;
-          const completed = brokenCompletedIds.has(record.id);
-          if (focused) {
-            drawBrokenState(record, entry, brokenFocusState, 1, false);
-            drawCardMeta(
-              brokenMetaForState(record, brokenFocusState),
+        s.push();
+        s.drawingContext.save();
+        s.drawingContext.beginPath();
+        s.drawingContext.rect(stageX, stageY, stageSize, stageSize);
+        s.drawingContext.clip();
+
+        s.translate(
+          stageX + stageSize / 2 - camera.x * camera.scale,
+          stageY + stageSize / 2 - camera.y * camera.scale,
+        );
+        s.scale(camera.scale);
+
+        const halfVisible = stageSize / (2 * camera.scale);
+        const minX = camera.x - halfVisible - layout.maxW;
+        const maxX = camera.x + halfVisible + layout.maxW;
+        const minY = camera.y - halfVisible - layout.maxH;
+        const maxY = camera.y + halfVisible + layout.maxH;
+
+        for (let i = 0; i < ordered.length; i += 1) {
+          const record = ordered[i];
+          const entry = layout.map.get(record.id);
+          if (!entry) continue;
+          if (
+            entry.x < minX ||
+            entry.x > maxX ||
+            entry.y < minY ||
+            entry.y > maxY
+          )
+            continue;
+          if (viewState === "grid") {
+            const rank = revealRank.get(record.id);
+            if (!Number.isFinite(rank) || rank >= revealCount) continue;
+          }
+          const revealRankValue = revealRank.get(record.id);
+          const gridAppearAlpha =
+            viewState === "grid" && Number.isFinite(revealRankValue)
+              ? Math.max(
+                  0,
+                  Math.min(
+                    1,
+                    (revealFloat - revealRankValue) * GRID_FADE_MULTIPLIER,
+                  ),
+                )
+              : 1;
+
+          if (type === "image") {
+            const inFocusedMode =
+              viewState === "focus" || viewState === "zoom-in";
+            const focused = inFocusedMode ? record.id === renderedFocusId : false;
+            const alpha = (inFocusedMode && !focused ? 0.2 : 1) * gridAppearAlpha;
+            const desaturate = !focused;
+            drawImage(record.imageUrl, entry, alpha, desaturate);
+            drawCardMeta(record, entry, alpha);
+          } else if (type === "text") {
+            const inFocusedMode =
+              viewState === "focus" || viewState === "zoom-in";
+            const focused = inFocusedMode ? record.id === renderedFocusId : false;
+            const alpha =
+              (inFocusedMode && !focused ? 0.86 : 1) * gridAppearAlpha;
+            const textColor =
+              inFocusedMode && !focused ? [0, 0, 56] : [0, 0, 100];
+            drawText(
+              record.text,
               entry,
-              1,
+              false,
+              alpha,
+              "center",
+              OPINIONS_TEXT_STYLE.sizeScale,
+              OPINIONS_TEXT_STYLE.excerpt,
+              OPINIONS_TEXT_STYLE.leadingRatio,
+              textColor,
             );
-          } else if (completed) {
-            const isLatestCompleted = record.id === brokenLastCompletedId;
-            drawBrokenState(
+            drawCardMeta(
               record,
               entry,
-              "drawing",
-              isLatestCompleted ? 0.26 : 0.2,
-              true,
+              inFocusedMode && !focused ? 0.52 : alpha,
             );
-            drawCardMeta(
-              brokenMetaForState(record, "drawing"),
-              entry,
-              isLatestCompleted ? 0.38 : 0.3,
-            );
+          } else if (viewState === "broken-seq") {
+            const focused = record.id === focusId;
+            const completed = brokenCompletedIds.has(record.id);
+            if (focused) {
+              drawBrokenState(record, entry, brokenFocusState, 1, false);
+              drawCardMeta(
+                brokenMetaForState(record, brokenFocusState),
+                entry,
+                1,
+              );
+            } else if (completed) {
+              const isLatestCompleted = record.id === brokenLastCompletedId;
+              drawBrokenState(
+                record,
+                entry,
+                "drawing",
+                isLatestCompleted ? 0.26 : 0.2,
+                true,
+              );
+              drawCardMeta(
+                brokenMetaForState(record, "drawing"),
+                entry,
+                isLatestCompleted ? 0.38 : 0.3,
+              );
+            } else {
+              drawBrokenState(record, entry, "image", 0.16, true);
+              drawCardMeta(brokenMetaForState(record, "image"), entry, 0.24);
+            }
           } else {
-            drawBrokenState(record, entry, "image", 0.16, true);
-            drawCardMeta(brokenMetaForState(record, "image"), entry, 0.24);
+            drawBrokenState(record, entry, "image", 1, true);
+            drawCardMeta(brokenMetaForState(record, "image"), entry, 1);
           }
-        } else {
-          drawBrokenState(record, entry, "image", 1, true);
-          drawCardMeta(brokenMetaForState(record, "image"), entry, 1);
         }
-      }
 
-      s.drawingContext.restore();
-      s.pop();
+        s.drawingContext.restore();
+        s.pop();
+      }
 
       const noteViewState =
         viewState === "zoom-in"
@@ -2383,17 +2731,13 @@
       {syncFocusToEditorial}
       {isRecording4K}
       {recordingError}
-      {focusPaddingRatio}
+      {authoringHint}
       on:togglePause={() => (paused = !paused)}
       on:nextStory={nextStory}
       on:prevText={prevText}
       on:nextText={nextText}
       on:toggleSyncFocus={() => (syncFocusToEditorial = !syncFocusToEditorial)}
       on:toggleRecording={toggle4KRecording}
-      on:focusPaddingChange={(event) => {
-        const next = Number(event.detail);
-        if (Number.isFinite(next)) focusPaddingRatio = next;
-      }}
     />
 
     <svelte:component this={P5} {sketch} />

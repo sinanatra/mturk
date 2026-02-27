@@ -6,14 +6,9 @@
   export let syncFocusToEditorial = true;
   export let isRecording4K = false;
   export let recordingError = "";
-  export let focusPaddingRatio = 0.25;
+  export let authoringHint = "";
 
   const dispatch = createEventDispatcher();
-
-  function onPadInput(event) {
-    const nextValue = Number.parseFloat(event.currentTarget.value);
-    dispatch("focusPaddingChange", nextValue);
-  }
 </script>
 
 <section class="metaTop">
@@ -30,19 +25,11 @@
   <button type="button" on:click={() => dispatch("toggleRecording")}
     >{isRecording4K ? "Stop 4K Rec" : "Record 4K"}</button
   >
-  <label class="metaRange">
-    Pad {Math.round(focusPaddingRatio * 100)}%
-    <input
-      type="range"
-      min="0"
-      max="0.5"
-      step="0.01"
-      value={focusPaddingRatio}
-      on:input={onPadInput}
-    />
-  </label>
   {#if recordingError}
     <p class="metaWarn">{recordingError}</p>
+  {/if}
+  {#if authoringHint}
+    <p class="metaHint">{authoringHint}</p>
   {/if}
 </section>
 
@@ -73,6 +60,13 @@
     color: #f8b7b7;
   }
 
+  .metaTop .metaHint {
+    border-color: #5b9ad6;
+    color: #c4deff;
+    max-width: 100%;
+    overflow-wrap: anywhere;
+  }
+
   .metaTop button {
     border: 1px solid #838b85;
     padding: 4px 10px;
@@ -82,18 +76,4 @@
     cursor: pointer;
   }
 
-  .metaRange {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    border: 1px solid #838b85;
-    padding: 4px 8px;
-    background: #000;
-    color: #838b85;
-    font-size: 13px;
-  }
-
-  .metaRange input {
-    width: 100px;
-  }
 </style>

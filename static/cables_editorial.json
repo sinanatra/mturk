@@ -12,7 +12,11 @@
       "mode": "time",
       "active": true,
       "durationSec": 5,
-      "text": "Who is working for Amazon Mechanical Turk?"
+      "text": "Who is working for Amazon Mechanical Turk?",
+      "visual": {
+        "mode": "blackout",
+        "hideGrid": true
+      }
     },
     {
       "id": "note-windows-grid-2",
@@ -20,7 +24,14 @@
       "mode": "time",
       "active": true,
       "durationSec": 12,
-      "text": "Amazon Mechanical Turk is a marketplace for paid microtasks, introduced in 2005 and named after the 18th century chess automaton that appeared autonomous while a human operator was hidden inside the cabinet."
+      "text": "Amazon Mechanical Turk is a marketplace for paid microtasks, introduced in 2005 and named after the 18th century chess automaton that appeared autonomous while a human operator was hidden inside the cabinet.",
+      "visual": {
+        "mode": "image",
+        "hideGrid": true,
+        "fadeInMs": 200,
+        "widthRatio": 0.4,
+        "images": ["/mturk.png"]
+      }
     },
     {
       "id": "note-windows-grid-3",
@@ -28,7 +39,14 @@
       "mode": "time",
       "active": true,
       "durationSec": 5,
-      "text": "The machine seemed intelligent but intelligence and labour was concealed."
+      "text": "The machine seemed intelligent but intelligence and labour was concealed.",
+      "visual": {
+        "mode": "image",
+        "hideGrid": true,
+        "fadeInMs": 0,
+        "widthRatio": 0.4,
+        "images": ["/mturk.png"]
+      }
     },
     {
       "id": "note-windows-grid-4",
@@ -36,7 +54,11 @@
       "mode": "time",
       "active": true,
       "durationSec": 11,
-      "text": "On the platform, individuals complete small units of work that machines cannot yet perform. Much of this work contributes to the creation of datasets used to train machine learning systems."
+      "text": "On the platform, individuals complete small units of work that machines cannot yet perform. Much of this work contributes to the creation of datasets used to train machine learning systems.",
+      "visual": {
+        "mode": "blackout",
+        "hideGrid": true
+      }
     },
     {
       "id": "note-windows-grid-5",
@@ -44,7 +66,11 @@
       "mode": "time",
       "active": true,
       "durationSec": 5,
-      "text": "Image tagging. Transcription. Categorization. Short descriptions. Moderation."
+      "text": "Image tagging. Transcription. Categorization. Short descriptions. Moderation.",
+      "visual": {
+        "mode": "blackout",
+        "hideGrid": true
+      }
     },
     {
       "id": "note-windows-grid-6",
@@ -52,7 +78,11 @@
       "mode": "time",
       "active": true,
       "durationSec": 5,
-      "text": "Repetitive actions compensated in cents."
+      "text": "Repetitive actions compensated in cents.",
+      "visual": {
+        "mode": "blackout",
+        "hideGrid": true
+      }
     },
     {
       "id": "note-windows-grid-7",
@@ -60,7 +90,14 @@
       "mode": "time",
       "active": true,
       "durationSec": 7,
-      "text": "To understand how this operates from within, I decided to create an account as a requester."
+      "text": "To understand how this operates from within, I decided to create an account as a requester.",
+      "visual": {
+        "mode": "image",
+        "hideGrid": true,
+        "fadeInMs": 0.4,
+        "widthRatio": 0.9,
+        "images": ["/interface.png"]
+      }
     },
     {
       "id": "note-windows-grid-8",
@@ -68,7 +105,14 @@
       "mode": "time",
       "active": true,
       "durationSec": 7,
-      "text": "That allowed me to define instructions, set payment, and decide what would count as acceptable work."
+      "text": "That allowed me to define instructions, set payment, and decide what would count as acceptable work.",
+      "visual": {
+        "mode": "image",
+        "hideGrid": true,
+        "fadeInMs": 0,
+        "widthRatio": 0.9,
+        "images": ["/interface.png"]
+      }
     },
     {
       "id": "note-windows-grid-9",
@@ -76,7 +120,22 @@
       "mode": "time",
       "active": true,
       "durationSec": 15,
-      "text": "I started by asking for a photograph of the view from outside the window. I offered $0.20."
+      "text": "I started by asking for a photograph of the view from outside the window. I offered $0.20.",
+      "visual": {
+        "mode": "image",
+        "hideGrid": true,
+        "fadeInMs": 0.4,
+        "widthRatio": 0.8,
+        "images": ["/task1.jpeg"]
+      }
+    },
+    {
+      "id": "note-windows-grid-10",
+      "phase": "windows-grid",
+      "mode": "time",
+      "active": true,
+      "durationSec": 10,
+      "text": "With this round, I collected 203 pictures. The initial goal had been 100."
     },
     {
       "id": "note-windows-focus-1",
@@ -125,14 +184,6 @@
       "active": true,
       "durationSec": 5,
       "text": ""
-    },
-    {
-      "id": "note-windows-focus-6",
-      "phase": "windows-focus",
-      "mode": "time",
-      "active": true,
-      "durationSec": 6,
-      "text": "With this round, I collected 203 pictures. The initial goal had been 100."
     },
     {
       "id": "note-windows-focus-7",
@@ -259,7 +310,7 @@
       "phase": "windows-focus",
       "mode": "time",
       "active": true,
-      "durationSec": 60,
+      "durationSec": 120,
       "text": ""
     },
     {
@@ -384,7 +435,8 @@
       "active": true,
       "durationSec": 12,
       "text": "Yet each image carries traces that exceed the instruction: open tabs, background applications, battery level, the type of computer, and glimpses of the room in which the work is taking place.",
-      "anchorId": "screens-34"
+      "anchorId": "screens-34",
+      "zoomTo": { "x": 646.56, "y": -512.53, "scale": 3 }
     },
     {
       "id": "note-screens-focus-screens-108",
@@ -393,7 +445,8 @@
       "active": true,
       "durationSec": 7,
       "text": "A bed behind the desk. A kitchen table used as a workstation. Night visible through a window.",
-      "anchorId": "screens-89"
+      "anchorId": "screens-89",
+      "zoomTo": { "x": 336.8, "y": -405.02, "scale": 3 }
     },
     {
       "id": "note-screens-focus-screens-81",
