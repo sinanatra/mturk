@@ -151,7 +151,8 @@
     const r = Math.max(0, Math.min(1, Number(ratio) || 0));
     if (r <= 0) return;
 
-    const inset = 1;
+    const lineWidth = 10;
+    const inset = lineWidth / 2;
     const span = Math.max(1, sizePx - inset * 2);
     const perimeter = span * 4;
     let remaining = perimeter * r;
@@ -162,8 +163,8 @@
     const bottom = inset + span;
 
     ctx.save();
-    ctx.strokeStyle = "rgba(255, 249, 210, 1)";
-    ctx.lineWidth = 1;
+    ctx.strokeStyle = "#838B85";
+    ctx.lineWidth = lineWidth;
     ctx.beginPath();
     ctx.moveTo(left, top);
 
@@ -1690,6 +1691,12 @@
         syncFocusToEditorial && focusNarrativeMs > 0
           ? Math.max(1, focusNarrativeMs)
           : Math.max(1, traversal.length * effectiveFocusAdvanceMs);
+      const brokenFocusHoldMs =
+        phase.mode === "broken" ? brokenFocusHoldOffsetSec * 1000 : 0;
+      const focusElapsedForCompletionMs =
+        phase.mode === "broken" && syncFocusToEditorial && focusNarrativeMs > 0
+          ? Math.max(0, focusElapsedMs + brokenFocusHoldMs)
+          : focusElapsedMs;
       const autoplayProgress =
         phase.mode === "broken"
           ? 0
@@ -1699,13 +1706,27 @@
             );
 
       const phaseTotalMs = overviewMs + zoomInMs + focusCycleMs;
-      const cycleCompleted = focusElapsedMs >= focusCycleMs;
+      const cycleCompleted = focusElapsedForCompletionMs >= focusCycleMs;
+      const preFocusElapsedMs = Math.min(elapsed, overviewMs + zoomInMs);
+      const phaseProgressElapsedMs =
+        preFocusElapsedMs +
+        (elapsed > overviewMs + zoomInMs ? focusElapsedForCompletionMs : 0);
+      const holdAwareBrokenCompletion =
+        phase.mode === "broken" && syncFocusToEditorial && focusNarrativeMs > 0;
+      const brokenCompletionOverrunMs = holdAwareBrokenCompletion
+        ? Math.max(90_000, Math.round(focusNarrativeMs * 0.8))
+        : 0;
+      const phaseHardStopMs = phaseTotalMs + brokenCompletionOverrunMs;
+      const reachedPhaseEnd = cycleCompleted || elapsed >= phaseHardStopMs;
       stageProgressRatio = Math.max(
         0,
-        Math.min(1, elapsed / Math.max(1, phaseTotalMs)),
+        Math.min(
+          1,
+          phaseProgressElapsedMs / Math.max(1, phaseTotalMs),
+        ),
       );
 
-      if (!paused && (cycleCompleted || elapsed >= phaseTotalMs)) {
+      if (!paused && reachedPhaseEnd) {
         paused = true;
         if (isRecording4K) {
           const safeFocusIndex = Math.max(
@@ -1713,13 +1734,11 @@
             Math.min(traversal.length - 1, focusIndex),
           );
           const holdId =
-            phase.mode === "broken"
-              ? traversal[traversal.length - 1] || ""
-              : forcedFocusRecordId ||
-                lockedAnchorRecordId ||
-                traversal[safeFocusIndex] ||
-                traversal[traversal.length - 1] ||
-                "";
+            forcedFocusRecordId ||
+            lockedAnchorRecordId ||
+            traversal[safeFocusIndex] ||
+            traversal[traversal.length - 1] ||
+            "";
           if (holdId) {
             focusIndex = Math.max(0, traversal.indexOf(holdId));
             lockedAnchorRecordId = holdId;
@@ -2420,7 +2439,8 @@
 
   .stageProgressLine {
     stroke: rgba(255, 249, 210, 1);
-    stroke-width: 1;
+    stroke: #838B85;
+    stroke-width: 10;
     vector-effect: non-scaling-stroke;
   }
 </style>
