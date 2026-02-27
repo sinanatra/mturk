@@ -6,7 +6,8 @@
     "dev": "vite dev",
     "build": "vite build",
     "preview": "vite preview",
-    "deploy": "gh-pages -d build --dotfiles  --cname mturks.giacomo.website"
+    "deploy": "gh-pages -d build --dotfiles  --cname mturks.giacomo.website",
+    "voiceover:cables": "node scripts/generate-cables-voiceover.mjs"
   },
   "devDependencies": {
     "@sveltejs/adapter-auto": "^3.0.0",

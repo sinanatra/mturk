@@ -60,6 +60,7 @@
   let phaseLabelForUi = "Windows Atlas";
   let activeIntroText = "";
   let activeEditorialText = "";
+  let activeNoteIdForVoiceover = "";
   let stageSizePx = 0;
   let stageLeftPx = 0;
   let stageTopPx = 0;
@@ -104,6 +105,16 @@
 
   let focusPaddingRatio = 0.50;
   let syncFocusToEditorial = true;
+
+  let voiceoverEnabled = false;
+  let voiceoverSupported = false;
+  let voiceoverError = "";
+  let lastVoiceoverCueKey = "";
+  let voiceoverVoices = [];
+  let voiceoverVoiceNames = [];
+  let voiceoverVoiceName = "";
+  let voiceoverRate = 0.92;
+  let detachVoiceoverVoicesListener = () => {};
 
   function buildStageProgressPath(ratio) {
     const r = Math.max(0, Math.min(1, Number(ratio) || 0));
@@ -512,6 +523,112 @@
     start4KRecording();
   }
 
+  function stopVoiceoverPreview() {
+    if (!browser) return;
+    if (!("speechSynthesis" in window)) return;
+    window.speechSynthesis.cancel();
+  }
+
+  function preferredVoiceFrom(voices) {
+    const preferredNames = [
+      "Samantha",
+      "Karen",
+      "Moira",
+      "Ava (Enhanced)",
+      "Ava",
+      "Daniel (Enhanced)",
+      "Daniel",
+      "Google UK English Female",
+      "Google US English",
+      "Microsoft Aria Online (Natural) - English (United States)",
+      "Alex",
+    ];
+    for (const name of preferredNames) {
+      const hit = voices.find((voice) => voice.name === name);
+      if (hit) return hit;
+    }
+    const english = voices.find((voice) =>
+      String(voice.lang || "")
+        .toLowerCase()
+        .startsWith("en"),
+    );
+    return english || voices[0] || null;
+  }
+
+  function refreshVoiceoverVoices() {
+    if (!browser) return;
+    if (!("speechSynthesis" in window)) return;
+    const voices = window.speechSynthesis.getVoices() || [];
+    voiceoverVoices = voices;
+    voiceoverVoiceNames = voices.map((voice) => voice.name);
+    if (!voices.length) return;
+    if (voices.some((voice) => voice.name === voiceoverVoiceName)) return;
+    const preferred = preferredVoiceFrom(voices);
+    voiceoverVoiceName = preferred?.name || voices[0]?.name || "";
+  }
+
+  function voiceoverNarrationText(value) {
+    return normalizeMultilineText(value).replace(/\s+/g, " ").trim();
+  }
+
+  function speakVoiceoverText(value) {
+    if (!browser || !voiceoverEnabled) return;
+    if (!("speechSynthesis" in window) || typeof SpeechSynthesisUtterance === "undefined") {
+      voiceoverError = "Voice preview unavailable in this browser.";
+      return;
+    }
+
+    const text = voiceoverNarrationText(value);
+    window.speechSynthesis.cancel();
+    if (!text) return;
+
+    const utterance = new SpeechSynthesisUtterance(text);
+    const selectedVoice = voiceoverVoices.find(
+      (voice) => voice.name === voiceoverVoiceName,
+    );
+    if (selectedVoice) {
+      utterance.voice = selectedVoice;
+      utterance.lang = selectedVoice.lang || "en-US";
+    } else {
+      utterance.lang = "en-US";
+    }
+    utterance.rate = voiceoverRate;
+    utterance.pitch = 1;
+    utterance.onerror = () => {
+      voiceoverError = "Could not speak this note.";
+    };
+    window.speechSynthesis.speak(utterance);
+  }
+
+  function setVoiceoverVoice(name) {
+    voiceoverVoiceName = String(name || "");
+    if (!voiceoverEnabled) return;
+    const cueKey = `${activeNoteIdForVoiceover}|${activeEditorialText}`;
+    lastVoiceoverCueKey = cueKey;
+    speakVoiceoverText(activeEditorialText);
+  }
+
+  function setVoiceoverRate(value) {
+    const parsed = Number.parseFloat(value);
+    if (!Number.isFinite(parsed)) return;
+    voiceoverRate = Math.max(0.75, Math.min(1.1, parsed));
+    if (!voiceoverEnabled) return;
+    const cueKey = `${activeNoteIdForVoiceover}|${activeEditorialText}`;
+    lastVoiceoverCueKey = cueKey;
+    speakVoiceoverText(activeEditorialText);
+  }
+
+  function toggleVoiceoverPreview() {
+    if (!voiceoverSupported) return;
+    voiceoverEnabled = !voiceoverEnabled;
+    voiceoverError = "";
+    if (!voiceoverEnabled) {
+      stopVoiceoverPreview();
+      return;
+    }
+    lastVoiceoverCueKey = "";
+  }
+
   function nextStory() {
     paused = false;
     storyAdvanceToken += 1;
@@ -864,6 +981,29 @@
 
   onMount(() => {
     if (!browser) return;
+    voiceoverSupported =
+      "speechSynthesis" in window &&
+      typeof SpeechSynthesisUtterance !== "undefined";
+    if (voiceoverSupported) {
+      refreshVoiceoverVoices();
+      const onVoicesChanged = () => refreshVoiceoverVoices();
+      if (typeof window.speechSynthesis.addEventListener === "function") {
+        window.speechSynthesis.addEventListener("voiceschanged", onVoicesChanged);
+        detachVoiceoverVoicesListener = () => {
+          window.speechSynthesis.removeEventListener(
+            "voiceschanged",
+            onVoicesChanged,
+          );
+        };
+      } else {
+        window.speechSynthesis.onvoiceschanged = onVoicesChanged;
+        detachVoiceoverVoicesListener = () => {
+          if (window.speechSynthesis.onvoiceschanged === onVoicesChanged) {
+            window.speechSynthesis.onvoiceschanged = null;
+          }
+        };
+      }
+    }
 
     (async () => {
       const mod = await import("p5-svelte");
@@ -877,9 +1017,19 @@
   });
 
   onDestroy(() => {
+    detachVoiceoverVoicesListener();
+    stopVoiceoverPreview();
     if (isRecording4K) stop4KRecording({ save: false });
     stopRecordingStream();
   });
+
+  $: if (browser && voiceoverEnabled) {
+    const cueKey = `${activeNoteIdForVoiceover}|${activeEditorialText}`;
+    if (cueKey !== lastVoiceoverCueKey) {
+      lastVoiceoverCueKey = cueKey;
+      speakVoiceoverText(activeEditorialText);
+    }
+  }
 
   function ensureImage(s, url) {
     if (!url) return null;
@@ -2322,6 +2472,7 @@
         viewElapsedForNote,
       );
       const rawEditorialText = activeNote?.text || "";
+      activeNoteIdForVoiceover = activeNote?.id || "";
       if (anchorDrivenNoteMode) {
         noteAnchorRecordId = "";
         noteAnchorHoldMs = 0;
@@ -2384,12 +2535,21 @@
       {isRecording4K}
       {recordingError}
       {focusPaddingRatio}
+      {voiceoverEnabled}
+      {voiceoverSupported}
+      {voiceoverError}
+      {voiceoverVoiceNames}
+      {voiceoverVoiceName}
+      {voiceoverRate}
       on:togglePause={() => (paused = !paused)}
       on:nextStory={nextStory}
       on:prevText={prevText}
       on:nextText={nextText}
       on:toggleSyncFocus={() => (syncFocusToEditorial = !syncFocusToEditorial)}
       on:toggleRecording={toggle4KRecording}
+      on:toggleVoiceover={toggleVoiceoverPreview}
+      on:voiceoverVoiceChange={(event) => setVoiceoverVoice(event.detail)}
+      on:voiceoverRateChange={(event) => setVoiceoverRate(event.detail)}
       on:focusPaddingChange={(event) => {
         const next = Number(event.detail);
         if (Number.isFinite(next)) focusPaddingRatio = next;
