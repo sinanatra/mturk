@@ -58,7 +58,9 @@
   let noteSkimDirection = 1;
 
   let phaseLabelForUi = "Windows Atlas";
-  let activeIntroText = "";
+  let activeChapterStep = "";
+  let activeChapterTitle = "";
+  let activeChapterDescription = "";
   let activeEditorialText = "";
   let stageSizePx = 0;
   let stageLeftPx = 0;
@@ -86,6 +88,7 @@
   const GRID_FADE_MULTIPLIER = 200;
   const GRID_REVEAL_SPEED_MULTIPLIER = 3;
   const FOCUS_PADDING_RATIO = 0.5;
+  const SHARED_CHAPTER_LEGEND_TEXT = "Who is working for Amazon Mechanical Turk?";
 
   let p5CanvasEl = null;
   let isRecording4K = false;
@@ -371,8 +374,8 @@
       Math.round((stageSubtitleYPx - stageTopPx) * stageToRecord),
     );
     const introMetrics = getRecordingOverlayMetrics({
-      textSelector: ".editorialCornerText",
-      boxSelector: ".editorialCorner",
+      textSelector: ".chapterLegendDesc",
+      boxSelector: ".chapterLegend",
       fallbackFontPx: RECORD_SIZE_PX * 0.02,
       fallbackLineHeight: RECORD_SIZE_PX * 0.023,
       fallbackWidthPx: RECORD_SIZE_PX * 0.78,
@@ -385,7 +388,16 @@
       fallbackWidthPx: RECORD_SIZE_PX * 0.78,
     });
 
-    drawRecordingOverlayText(recordingCtx, activeIntroText, {
+    const legendHeader =
+      activeChapterStep && activeChapterTitle
+        ? `${activeChapterTitle}: ${activeChapterStep}`
+        : activeChapterTitle || activeChapterStep || "";
+    const legendText =
+      activeChapterDescription && legendHeader
+        ? `${activeChapterDescription}\n${legendHeader}`
+        : activeChapterDescription || legendHeader;
+
+    drawRecordingOverlayText(recordingCtx, legendText, {
       centerX: RECORD_SIZE_PX / 2,
       anchorY: introY,
       width: introMetrics.widthPx,
@@ -752,6 +764,19 @@
     if (phaseId === "opinions") return introOpinions;
     if (phaseId === "broken") return introBroken;
     return "";
+  }
+
+  function chapterMetaForPhase(phaseId) {
+    const idx = TIMELINE.findIndex((item) => item.id === phaseId);
+    if (idx < 0) return { step: "", title: "" };
+    return {
+      step: `${idx + 1}/${TIMELINE.length}`,
+      title: TIMELINE[idx].label || "",
+    };
+  }
+
+  function legendDescriptionForPhase() {
+    return normalizeMultilineText(SHARED_CHAPTER_LEGEND_TEXT);
   }
 
   $: records = rows.map(normalizeRecord);
@@ -2691,8 +2716,11 @@
           lastResolvedNoteId = activeNoteId;
         }
       }
+      const chapterMeta = chapterMetaForPhase(phase.id);
+      activeChapterStep = chapterMeta.step;
+      activeChapterTitle = chapterMeta.title;
+      activeChapterDescription = legendDescriptionForPhase();
       activeEditorialText = stripInlineImageIds(rawEditorialText);
-      activeIntroText = introForPhase(phase.id);
 
       phaseLabelForUi = `${phase.label} - ${noteStateForResolve}`;
     };
@@ -2702,7 +2730,9 @@
 {#if P5}
   <article bind:clientWidth={width} bind:clientHeight={height}>
     <CablesOverlay
-      {activeIntroText}
+      {activeChapterStep}
+      {activeChapterTitle}
+      {activeChapterDescription}
       {activeEditorialText}
       {stageCenterXPx}
       {stageTitleYPx}
@@ -2784,6 +2814,7 @@
   .stageProgressLine {
     stroke: rgba(255, 249, 210, 1);
     stroke: #838B85;
+    stroke: pink;
     stroke-width: 10;
     vector-effect: non-scaling-stroke;
   }

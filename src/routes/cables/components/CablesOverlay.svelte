@@ -1,5 +1,7 @@
 <script>
-  export let activeIntroText = "";
+  export let activeChapterStep = "";
+  export let activeChapterTitle = "";
+  export let activeChapterDescription = "";
   export let activeEditorialText = "";
   export let stageCenterXPx = 0;
   export let stageTitleYPx = 0;
@@ -8,12 +10,20 @@
   export let editorialWidthPx = 0;
 </script>
 
-{#if activeIntroText}
+{#if activeChapterStep || activeChapterTitle || activeChapterDescription}
   <section
-    class="editorialCorner"
+    class="chapterLegend"
     style={`left:${stageCenterXPx}px; top:${stageTitleYPx}px; width:${Math.max(260, Math.round(stageSizePx * 0.78))}px;`}
   >
-    <p class="editorialCornerText">{activeIntroText}</p>
+    {#if activeChapterDescription}
+      <p class="chapterLegendDesc">{activeChapterDescription}</p>
+    {/if}
+    {#if activeChapterStep || activeChapterTitle}
+      <p class="chapterLegendHead">
+        {#if activeChapterTitle}<span class="chapterLegendTitle">{activeChapterTitle}</span>{/if}
+        {#if activeChapterStep}<span class="chapterLegendStep">: {activeChapterStep}</span>{/if}
+      </p>
+    {/if}
   </section>
 {/if}
 
@@ -27,7 +37,7 @@
 {/if}
 
 <style>
-  .editorialCorner {
+  .chapterLegend {
     position: fixed;
     left: 0;
     top: 0;
@@ -40,10 +50,41 @@
     text-align: center;
   }
 
-  .editorialCornerText {
+  .chapterLegendHead {
     margin: 0;
     padding: 0;
-    display: inline;
+    display: block;
+    width: fit-content;
+    max-width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+    font-size: clamp(11px, 1.45vw, 15px);
+    line-height: 1.02;
+    color: #ffffff;
+    background: rgb(0, 0, 0);
+    text-align: center;
+    white-space: pre-line;
+    box-decoration-break: clone;
+    -webkit-box-decoration-break: clone;
+  }
+
+  .chapterLegendStep {
+    color: #ffffff;
+    letter-spacing: 0.02em;
+  }
+
+  .chapterLegendTitle {
+    color: #ffffff;
+  }
+
+  .chapterLegendDesc {
+    margin: 0;
+    padding: 0;
+    display: block;
+    width: fit-content;
+    max-width: 100%;
+    margin-left: auto;
+    margin-right: auto;
     font-size: clamp(10px, 1.45vw, 15px);
     line-height: 0.98;
     color: #ffffff;
