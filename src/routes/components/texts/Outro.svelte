@@ -8,6 +8,11 @@
         <img src="./suspended.png" alt="Mechanical Turk" />
         <figcaption>A screenshot of the page denying me access.</figcaption>
     </figure>
+    <br>
+     <figure>
+        <img src="./denied.png" alt="Mechanical Turk" />
+        <figcaption>A screenshot showing the response when trying to login to requester.mturk.com/</figcaption>
+    </figure>
 </section>
 
 <style>
