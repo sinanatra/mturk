@@ -21,7 +21,7 @@
     {#if activeChapterStep || activeChapterTitle}
       <p class="chapterLegendHead">
         {#if activeChapterTitle}<span class="chapterLegendTitle">{activeChapterTitle}</span>{/if}
-        {#if activeChapterStep}<span class="chapterLegendStep">: {activeChapterStep}</span>{/if}
+        {#if activeChapterStep}<span class="chapterLegendStep"> : {activeChapterStep}</span>{/if}
       </p>
     {/if}
   </section>
@@ -69,12 +69,12 @@
   }
 
   .chapterLegendStep {
-    color: #ffffff;
+    color: rgba(255, 255, 255, 0.68);
     letter-spacing: 0.02em;
   }
 
   .chapterLegendTitle {
-    color: #ffffff;
+    color: rgba(255, 255, 255, 0.68);
   }
 
   .chapterLegendDesc {

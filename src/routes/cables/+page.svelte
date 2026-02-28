@@ -56,6 +56,8 @@
   let storyAdvanceToken = 0;
   let noteSkimToken = 0;
   let noteSkimDirection = 1;
+  let recordingRestartToken = 0;
+  let recordingResetPending = false;
 
   let phaseLabelForUi = "Windows Atlas";
   let activeChapterStep = "";
@@ -80,6 +82,10 @@
   let introScreens = "";
   let introOpinions = "";
   let introBroken = "";
+  let chapterTitleWindows = "";
+  let chapterTitleScreens = "";
+  let chapterTitleOpinions = "";
+  let chapterTitleBroken = "";
 
   const RECORD_SIZE_PX = 1920; //3840;
   const RECORD_FPS = 30;
@@ -253,6 +259,8 @@
       lineHeight,
       anchor = "top",
       textColor = "#FFF9D2",
+      secondaryTextColor = textColor,
+      secondaryTextColorFromLine = Number.POSITIVE_INFINITY,
       bgColor = "#000000",
     },
   ) {
@@ -275,7 +283,7 @@
       const y = startY + i * lineHeight;
       ctx.fillStyle = bgColor;
       ctx.fillRect(centerX - lineW / 2 - 6, y, lineW + 12, lineHeight);
-      ctx.fillStyle = textColor;
+      ctx.fillStyle = i >= secondaryTextColorFromLine ? secondaryTextColor : textColor;
       ctx.fillText(line, centerX, y + lineHeight / 2);
     }
     ctx.restore();
@@ -325,6 +333,10 @@
   function drawRecordingFrame() {
     if (!isRecording4K || !recordingCtx || !recordingCanvas || !p5CanvasEl)
       return;
+    if (recordingResetPending) {
+      recordingRaf = requestAnimationFrame(drawRecordingFrame);
+      return;
+    }
 
     if (recordingFinalizing) {
       const nowMs = performance.now();
@@ -390,7 +402,7 @@
 
     const legendHeader =
       activeChapterStep && activeChapterTitle
-        ? `${activeChapterTitle}: ${activeChapterStep}`
+        ? `${activeChapterTitle} : ${activeChapterStep}`
         : activeChapterTitle || activeChapterStep || "";
     const legendText =
       activeChapterDescription && legendHeader
@@ -405,6 +417,8 @@
       lineHeight: introMetrics.lineHeight,
       anchor: "top",
       textColor: "#FFFFFF",
+      secondaryTextColor: "rgba(255,255,255,0.68)",
+      secondaryTextColorFromLine: 1,
     });
     drawRecordingOverlayText(recordingCtx, activeEditorialText, {
       centerX: RECORD_SIZE_PX / 2,
@@ -427,6 +441,7 @@
     if (!recordingMediaRecorder) return;
     saveRecordingOnStop = save;
     isRecording4K = false;
+    recordingResetPending = false;
     recordingFinalizing = false;
     recordingFinalizeHoldUntilMs = 0;
     recordingBlackoutUntilMs = 0;
@@ -450,6 +465,10 @@
       return;
     }
     if (isRecording4K) return;
+
+    paused = false;
+    recordingResetPending = true;
+    recordingRestartToken += 1;
 
     recordingCanvas = document.createElement("canvas");
     recordingCanvas.width = RECORD_SIZE_PX;
@@ -516,8 +535,16 @@
     recordingBlackoutUntilMs = 0;
     freezeBrokenOnDrawing = false;
     isRecording4K = true;
-    drawRecordingFrame();
-    recordingMediaRecorder.start();
+    const beginCaptureWhenReset = () => {
+      if (!isRecording4K || !recordingMediaRecorder) return;
+      if (recordingResetPending) {
+        requestAnimationFrame(beginCaptureWhenReset);
+        return;
+      }
+      drawRecordingFrame();
+      recordingMediaRecorder.start();
+    };
+    beginCaptureWhenReset();
   }
 
   function toggle4KRecording() {
@@ -600,6 +627,11 @@
     const intro = payload.intro;
     if (!intro || typeof intro !== "object") return;
 
+    chapterTitleWindows = "";
+    chapterTitleScreens = "";
+    chapterTitleOpinions = "";
+    chapterTitleBroken = "";
+
     if (typeof intro.windows === "string") {
       introWindows = normalizeMultilineText(intro.windows);
     }
@@ -611,6 +643,38 @@
     }
     if (typeof intro.broken === "string") {
       introBroken = normalizeMultilineText(intro.broken);
+    }
+
+    const chapterTitles =
+      intro.chapterTitles && typeof intro.chapterTitles === "object"
+        ? intro.chapterTitles
+        : null;
+    if (chapterTitles) {
+      if (typeof chapterTitles.windows === "string") {
+        chapterTitleWindows = normalizeText(chapterTitles.windows);
+      }
+      if (typeof chapterTitles.screens === "string") {
+        chapterTitleScreens = normalizeText(chapterTitles.screens);
+      }
+      if (typeof chapterTitles.opinions === "string") {
+        chapterTitleOpinions = normalizeText(chapterTitles.opinions);
+      }
+      if (typeof chapterTitles.broken === "string") {
+        chapterTitleBroken = normalizeText(chapterTitles.broken);
+      }
+    }
+
+    if (typeof intro.windowsTitle === "string") {
+      chapterTitleWindows = normalizeText(intro.windowsTitle);
+    }
+    if (typeof intro.screensTitle === "string") {
+      chapterTitleScreens = normalizeText(intro.screensTitle);
+    }
+    if (typeof intro.opinionsTitle === "string") {
+      chapterTitleOpinions = normalizeText(intro.opinionsTitle);
+    }
+    if (typeof intro.brokenTitle === "string") {
+      chapterTitleBroken = normalizeText(intro.brokenTitle);
     }
 
     if (typeof intro.text === "string") {
@@ -769,9 +833,20 @@
   function chapterMetaForPhase(phaseId) {
     const idx = TIMELINE.findIndex((item) => item.id === phaseId);
     if (idx < 0) return { step: "", title: "" };
+    const fallbackTitle = TIMELINE[idx].label || "";
+    const overrideTitle =
+      phaseId === "windows"
+        ? chapterTitleWindows
+        : phaseId === "screens"
+          ? chapterTitleScreens
+          : phaseId === "opinions"
+            ? chapterTitleOpinions
+            : phaseId === "broken"
+              ? chapterTitleBroken
+              : "";
     return {
       step: `${idx + 1}/${TIMELINE.length}`,
-      title: TIMELINE[idx].label || "",
+      title: overrideTitle || fallbackTitle,
     };
   }
 
@@ -1084,6 +1159,7 @@
     let viewStatePrev = "grid";
     let zoomStartCamera = null;
     let storyTokenSeen = storyAdvanceToken;
+    let recordingRestartSeen = recordingRestartToken;
     let noteSkimSeen = noteSkimToken;
     const noteSkimOffsetByTimeline = new Map();
     let skimZoomRunMs = 0;
@@ -1778,6 +1854,22 @@
       const stageY = (s.height - stageSize) / 2;
 
       const now = s.millis();
+      if (recordingRestartSeen !== recordingRestartToken) {
+        phaseIndex = 0;
+        resetPhaseProgress(now);
+        camera.initialized = false;
+        camera.x = 0;
+        camera.y = 0;
+        camera.scale = 1;
+        camera.toX = 0;
+        camera.toY = 0;
+        camera.toScale = 1;
+        camera.lastMs = now;
+        storyTokenSeen = storyAdvanceToken;
+        noteSkimSeen = noteSkimToken;
+        recordingRestartSeen = recordingRestartToken;
+        recordingResetPending = false;
+      }
       if (storyTokenSeen !== storyAdvanceToken) {
         const delta = Math.max(1, storyAdvanceToken - storyTokenSeen);
         jumpPhase(delta, now);
@@ -2825,7 +2917,6 @@
   .stageProgressLine {
     stroke: rgba(255, 249, 210, 1);
     stroke: #838B85;
-    stroke: pink;
     stroke-width: 10;
     vector-effect: non-scaling-stroke;
   }
