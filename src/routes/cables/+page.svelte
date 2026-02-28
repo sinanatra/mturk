@@ -94,6 +94,7 @@
   const GRID_FADE_MULTIPLIER = 200;
   const GRID_REVEAL_SPEED_MULTIPLIER = 3;
   const FOCUS_PADDING_RATIO = 0.5;
+  const NOTE_ZOOMOUT_LEAD_SEC = 0.45;
   const SHARED_CHAPTER_LEGEND_TEXT = "Who is working for Amazon Mechanical Turk?";
 
   let p5CanvasEl = null;
@@ -535,16 +536,16 @@
     recordingBlackoutUntilMs = 0;
     freezeBrokenOnDrawing = false;
     isRecording4K = true;
-    const beginCaptureWhenReset = () => {
+    const beginCaptureAfterReset = () => {
       if (!isRecording4K || !recordingMediaRecorder) return;
       if (recordingResetPending) {
-        requestAnimationFrame(beginCaptureWhenReset);
+        requestAnimationFrame(beginCaptureAfterReset);
         return;
       }
       drawRecordingFrame();
       recordingMediaRecorder.start();
     };
-    beginCaptureWhenReset();
+    beginCaptureAfterReset();
   }
 
   function toggle4KRecording() {
@@ -1177,6 +1178,10 @@
     let brokenFocusHoldNoteId = "";
     let lastVisualNoteId = "";
     let lastVisualSignature = "";
+    let zoomToSettledNoteId = "";
+    let zoomToReleasingNoteId = "";
+    let zoomToReleasedNoteId = "";
+    let zoomToHoldOffsetSec = 0;
     let font;
 
     function resetPhaseProgress(nowMs = 0) {
@@ -1203,6 +1208,10 @@
       brokenFocusHoldNoteId = "";
       lastVisualNoteId = "";
       lastVisualSignature = "";
+      zoomToSettledNoteId = "";
+      zoomToReleasingNoteId = "";
+      zoomToReleasedNoteId = "";
+      zoomToHoldOffsetSec = 0;
     }
 
     function jumpPhase(offset = 1, nowMs = 0) {
@@ -1320,10 +1329,6 @@
         return;
       }
 
-      s.noStroke();
-      s.fill(...VIEWS_PALETTE.tile, alpha);
-      s.rect(entry.x, entry.y, entry.w, entry.h);
-
       const scale = Math.min(entry.w / image.width, entry.h / image.height);
       const drawW = image.width * scale;
       const drawH = image.height * scale;
@@ -1396,14 +1401,13 @@
                 .join(";")}`
             : `${mode}|${(visual.images || []).join(",")}`;
 
-      s.push();
-      s.rectMode(s.CORNER);
-      s.noStroke();
-      s.fill(0, 0, 0, 1);
-      s.rect(stageX, stageY, stageSize, stageSize);
-      s.pop();
-
       if (mode === "blackout" || mode === "black") {
+        s.push();
+        s.rectMode(s.CORNER);
+        s.noStroke();
+        s.fill(0, 0, 0, 1);
+        s.rect(stageX, stageY, stageSize, stageSize);
+        s.pop();
         return { drawn: true, hideGrid: shouldHideGrid };
       }
 
@@ -1855,7 +1859,6 @@
 
       const now = s.millis();
       if (recordingRestartSeen !== recordingRestartToken) {
-        phaseIndex = 0;
         resetPhaseProgress(now);
         camera.initialized = false;
         camera.x = 0;
@@ -1987,6 +1990,7 @@
         0,
         preBaseElapsedSec +
           preElapsedOffset +
+          zoomToHoldOffsetSec +
           (phase.mode === "broken" && preNoteViewState === "broken-seq"
             ? brokenFocusHoldOffsetSec
             : 0),
@@ -2313,13 +2317,6 @@
         typeof preTimelineNote.zoomTo === "object"
           ? preTimelineNote.zoomTo
           : null;
-      const noteZoomScaleRaw = Number(noteZoomTo?.scale);
-      const noteZoomScale =
-        Number.isFinite(noteZoomScaleRaw) && noteZoomScaleRaw > 0
-          ? noteZoomScaleRaw
-          : 1;
-      const focusScale = Math.max(minFocusScale, baseFocusScale * noteZoomScale);
-
       const driftXBase =
         viewState === "focus" && !paused
           ? focusEntry.x + (nextFocusEntry.x - focusEntry.x) * focusBlend
@@ -2328,10 +2325,78 @@
         viewState === "focus" && !paused
           ? focusEntry.y + (nextFocusEntry.y - focusEntry.y) * focusBlend
           : focusEntry.y;
+      const noteZoomKey =
+        noteZoomTo && preTimelineNote?.id && focusRecord?.id
+          ? `${preTimelineNote.id}|${focusRecord.id}`
+          : "";
+      const baseFocusScaleNoZoom = Math.max(minFocusScale, baseFocusScale);
+      const noteRemainingSec = Math.max(0, preActiveNoteDurSec - preElapsedInNoteSec);
+
+      if (!noteZoomTo || !noteZoomKey) {
+        zoomToSettledNoteId = "";
+        zoomToReleasingNoteId = "";
+        zoomToReleasedNoteId = "";
+      } else {
+        if (zoomToReleasingNoteId && zoomToReleasingNoteId !== noteZoomKey) {
+          zoomToReleasingNoteId = "";
+        }
+        if (zoomToReleasedNoteId && zoomToReleasedNoteId !== noteZoomKey) {
+          zoomToReleasedNoteId = "";
+        }
+      }
+
+      if (
+        noteZoomTo &&
+        noteZoomKey &&
+        zoomToSettledNoteId !== noteZoomKey &&
+        zoomToReleasingNoteId !== noteZoomKey &&
+        zoomToReleasedNoteId !== noteZoomKey
+      ) {
+        const pxDistToBase =
+          Math.hypot(camera.x - driftXBase, camera.y - driftYBase) *
+          Math.max(camera.scale, 0.0001);
+        const scaleDistToBase = Math.abs(camera.scale - baseFocusScaleNoZoom);
+        const arrivedToBase = pxDistToBase <= 90 && scaleDistToBase <= 0.07;
+        if (arrivedToBase && noteZoomKey) zoomToSettledNoteId = noteZoomKey;
+      }
+      const hasReleasedZoomTo =
+        Boolean(noteZoomKey) && zoomToReleasedNoteId === noteZoomKey;
+      let isReleasingZoomTo =
+        Boolean(noteZoomKey) && zoomToReleasingNoteId === noteZoomKey;
+      const isSettledZoomTo =
+        Boolean(noteZoomKey) && zoomToSettledNoteId === noteZoomKey;
+      if (
+        noteZoomTo &&
+        noteZoomKey &&
+        isSettledZoomTo &&
+        !isReleasingZoomTo &&
+        !hasReleasedZoomTo &&
+        noteRemainingSec <= NOTE_ZOOMOUT_LEAD_SEC
+      ) {
+        zoomToReleasingNoteId = noteZoomKey;
+        isReleasingZoomTo = true;
+      }
+      const applyNoteZoom =
+        Boolean(noteZoomTo) &&
+        noteZoomKey &&
+        isSettledZoomTo &&
+        !isReleasingZoomTo &&
+        !hasReleasedZoomTo;
+      const noteZoomScaleRaw = Number(noteZoomTo?.scale);
+      const noteZoomScale =
+        Number.isFinite(noteZoomScaleRaw) && noteZoomScaleRaw > 0
+          ? noteZoomScaleRaw
+          : 1;
+      const focusScale = Math.max(
+        minFocusScale,
+        baseFocusScale * (applyNoteZoom ? noteZoomScale : 1),
+      );
       const noteZoomXRaw = Number(noteZoomTo?.x);
       const noteZoomYRaw = Number(noteZoomTo?.y);
-      const driftX = Number.isFinite(noteZoomXRaw) ? noteZoomXRaw : driftXBase;
-      const driftY = Number.isFinite(noteZoomYRaw) ? noteZoomYRaw : driftYBase;
+      const driftX =
+        applyNoteZoom && Number.isFinite(noteZoomXRaw) ? noteZoomXRaw : driftXBase;
+      const driftY =
+        applyNoteZoom && Number.isFinite(noteZoomYRaw) ? noteZoomYRaw : driftYBase;
 
       const target = {
         x: viewState === "grid" ? 0 : driftX,
@@ -2377,6 +2442,22 @@
               ? Math.max(900, Math.min(2200, effectiveFocusAdvanceMs * 0.28))
             : effectiveFocusAdvanceMs;
         tickCamera(now, viewState, cameraFollowMs);
+      }
+
+      if (isReleasingZoomTo && noteZoomKey) {
+        const pxDistToBase =
+          Math.hypot(camera.x - driftXBase, camera.y - driftYBase) *
+          Math.max(camera.scale, 0.0001);
+        const scaleDistToBase = Math.abs(camera.scale - baseFocusScaleNoZoom);
+        const returnedToBase = pxDistToBase <= 90 && scaleDistToBase <= 0.07;
+        if (!returnedToBase && !paused) {
+          zoomToHoldOffsetSec -= frameDeltaMs / 1000;
+        }
+        if (returnedToBase) {
+          zoomToReleasingNoteId = "";
+          zoomToReleasedNoteId = noteZoomKey;
+          zoomToSettledNoteId = "";
+        }
       }
 
       // In anchored broken mode, do not advance image->text->drawing until
@@ -2766,11 +2847,16 @@
           : 0;
       const effectiveElapsedSec = Math.max(
         0,
-        baseElapsedForResolve + elapsedOffset + brokenHoldOffsetForResolve,
+        baseElapsedForResolve +
+          elapsedOffset +
+          brokenHoldOffsetForResolve +
+          zoomToHoldOffsetSec,
       );
       const skimAdjustedPhaseElapsedMs = Math.max(
         0,
-        phaseElapsedForResolve * 1000 + elapsedOffset * 1000,
+        phaseElapsedForResolve * 1000 +
+          elapsedOffset * 1000 +
+          zoomToHoldOffsetSec * 1000,
       );
       stageProgressRatio = Math.max(
         0,

@@ -1,23 +1,13 @@
 {
   "intro": {
-    "windows": "What can you see from outside of the windows?",
-    "screens": "What is your working setup?",
-    "opinions": "What do you like and detest about working for Amazon Mechanical Turk?\n Please share your honest feelings and opinions on the platform.",
-    "broken": "Worker 1 uploads an image. Worker 2 describes the image in text. \n Worker 3 draws only from that written description."
+    "chapterTitles": {
+      "windows": "What do you see outside your window?",
+      "screens": "What is your working setup?",
+      "opinions": "How is it working on this platform?",
+      "broken": "Desribe the image. Draw the scene."
+    }
   },
   "notes": [
-    {
-      "id": "note-windows-grid-1",
-      "phase": "windows-grid",
-      "mode": "time",
-      "active": true,
-      "durationSec": 5,
-      "text": "Who is working for Amazon Mechanical Turk?",
-      "visual": {
-        "mode": "blackout",
-        "hideGrid": true
-      }
-    },
     {
       "id": "note-windows-grid-2",
       "phase": "windows-grid",
@@ -28,7 +18,7 @@
       "visual": {
         "mode": "image",
         "hideGrid": true,
-        "fadeInMs": 200,
+        "fadeInMs": 4000,
         "widthRatio": 0.4,
         "images": ["/mturk.png"]
       }
@@ -436,7 +426,7 @@
       "durationSec": 12,
       "text": "Yet each image carries traces that exceed the instruction: open tabs, background applications, battery level, the type of computer, and glimpses of the room in which the work is taking place.",
       "anchorId": "screens-34",
-      "zoomTo": { "x": 646.56, "y": -512.53, "scale": 3 }
+      "zoomTo": { "x": 646.56, "y": -512.53, "scale": 4 }
     },
     {
       "id": "note-screens-focus-screens-108",
@@ -446,7 +436,7 @@
       "durationSec": 7,
       "text": "A bed behind the desk. A kitchen table used as a workstation. Night visible through a window.",
       "anchorId": "screens-89",
-      "zoomTo": { "x": 336.8, "y": -405.02, "scale": 3 }
+      "zoomTo": { "x": 336.8, "y": -405.02, "scale": 4 }
     },
     {
       "id": "note-screens-focus-screens-81",
@@ -454,8 +444,9 @@
       "mode": "time",
       "active": true,
       "durationSec": 9,
-      "text": "These elements are incidental, but they reveal conditions of labor. When datasets are cleaned, these traces are removed. Here they remain visible.",
-      "anchorId": "screens-36"
+      "text": "These elements are incidental, but they reveal conditions of labor and identity. When datasets are cleaned, these traces are removed. Here they remain visible.",
+      "anchorId": "screens-36",
+      "zoomTo": { "x": 348.09, "y": -34.71, "scale": 5 }
     },
     {
       "id": "note-screens-focus-screens-57",
@@ -464,7 +455,8 @@
       "active": true,
       "durationSec": 9,
       "text": "The image of a desk becomes more than documentation of a workspace.",
-      "anchorId": "screens-7"
+      "anchorId": "screens-7",
+      "zoomTo": { "x": -302.34, "y": -550.32, "scale": 5 }
     },
     {
       "id": "note-screens-focus-screens-57",
