@@ -2676,6 +2676,17 @@
         0,
         baseElapsedForResolve + elapsedOffset + brokenHoldOffsetForResolve,
       );
+      const skimAdjustedPhaseElapsedMs = Math.max(
+        0,
+        phaseElapsedForResolve * 1000 + elapsedOffset * 1000,
+      );
+      stageProgressRatio = Math.max(
+        0,
+        Math.min(
+          1,
+          skimAdjustedPhaseElapsedMs / Math.max(1, phaseTotalMs),
+        ),
+      );
       const phaseElapsedForNote =
         timelineForResolve.elapsedMode === "phase"
           ? effectiveElapsedSec
