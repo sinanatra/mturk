@@ -5,32 +5,46 @@
   import CablesOverlay from "./components/CablesOverlay.svelte";
   import CablesControls from "./components/CablesControls.svelte";
   import {
-    BROKEN_TEXT_STYLE,
-    NOTE_RESTART_PAUSE_SEC,
     OPINIONS_TEXT_STYLE,
     TIMELINE,
     VIEWS_PALETTE,
     buildColumnSnakeTraversal,
     buildMasonryLayout,
+    collectEditorialVisualImageUrls,
     emptyLayout,
     estimateOpinionCardHeight,
-    excerpt,
+    imageAspectFromMeta,
+    isTypingElementFocused,
     mapById,
-    normalizeMultilineText,
     normalizeNote,
     normalizeRecord,
-    normalizeText,
     noteDurSec,
     noteIndexAtElapsed,
     noteStartSec,
-    sequenceNoteByDuration,
+    resolveNoteAnchorRecordId,
+    stripInlineImageIds,
     sortRecords,
   } from "./lib/cables-utils";
-
+  import {
+    buildStageProgressPath,
+    drawRecordingOverlayText,
+    drawRecordingStageProgress,
+    getRecordingOverlayMetrics,
+  } from "./lib/cables-recording-utils";
+  import {
+    buildEditorialRuntime,
+    chapterMetaForPhase,
+    legendDescriptionForPhase,
+    parseEditorialPayload,
+  } from "./lib/cables-story-utils";
+  import {
+    createSketchRenderers,
+    setCameraTarget,
+    tickCamera,
+  } from "./lib/cables-sketch-renderers";
   let P5 = null;
   let width;
   let height;
-
   let rows = [];
   let records = [];
 
@@ -67,21 +81,16 @@
   let stageSizePx = 0;
   let stageLeftPx = 0;
   let stageTopPx = 0;
-  let stageBottomPx = 0;
   let stageTitleYPx = 0;
   let editorialWidthPx = 0;
   let stageCenterXPx = 0;
-  let stageCenterYPx = 0;
   let stageSubtitleYPx = 0;
   let stageProgressRatio = 0;
   let stageProgressPath = "M 0 0";
 
   let editorialNotes = [];
+  let editorialRuntime = buildEditorialRuntime([]);
   let editorialVisualImageUrls = [];
-  let introWindows = "";
-  let introScreens = "";
-  let introOpinions = "";
-  let introBroken = "";
   let chapterTitleWindows = "";
   let chapterTitleScreens = "";
   let chapterTitleOpinions = "";
@@ -119,91 +128,6 @@
   let authoringHint = "";
   let syncFocusToEditorial = true;
 
-  function buildStageProgressPath(ratio) {
-    const r = Math.max(0, Math.min(1, Number(ratio) || 0));
-    const total = 400;
-    let remaining = total * r;
-    const points = [[0, 0]];
-
-    const pushPoint = (x, y) => {
-      const last = points[points.length - 1];
-      if (!last || last[0] !== x || last[1] !== y) points.push([x, y]);
-    };
-
-    if (remaining <= 0) return "M 0 0";
-
-    // top edge
-    if (remaining <= 100) {
-      pushPoint(remaining, 0);
-      return `M ${points[0][0]} ${points[0][1]} L ${points[1][0]} ${points[1][1]}`;
-    }
-    pushPoint(100, 0);
-    remaining -= 100;
-
-    // right edge
-    if (remaining <= 100) {
-      pushPoint(100, remaining);
-      return `M ${points[0][0]} ${points[0][1]} ` + points.slice(1).map((p) => `L ${p[0]} ${p[1]}`).join(" ");
-    }
-    pushPoint(100, 100);
-    remaining -= 100;
-
-    // bottom edge
-    if (remaining <= 100) {
-      pushPoint(100 - remaining, 100);
-      return `M ${points[0][0]} ${points[0][1]} ` + points.slice(1).map((p) => `L ${p[0]} ${p[1]}`).join(" ");
-    }
-    pushPoint(0, 100);
-    remaining -= 100;
-
-    // left edge
-    pushPoint(0, Math.max(0, 100 - remaining));
-    return `M ${points[0][0]} ${points[0][1]} ` + points.slice(1).map((p) => `L ${p[0]} ${p[1]}`).join(" ");
-  }
-
-  function drawRecordingStageProgress(ctx, ratio, sizePx) {
-    const r = Math.max(0, Math.min(1, Number(ratio) || 0));
-    if (r <= 0) return;
-
-    const lineWidth = 10;
-    const inset = lineWidth / 2;
-    const span = Math.max(1, sizePx - inset * 2);
-    const perimeter = span * 4;
-    let remaining = perimeter * r;
-
-    const left = inset;
-    const top = inset;
-    const right = inset + span;
-    const bottom = inset + span;
-
-    ctx.save();
-    ctx.strokeStyle = "#838B85";
-    ctx.lineWidth = lineWidth;
-    ctx.beginPath();
-    ctx.moveTo(left, top);
-
-    const topStep = Math.min(span, remaining);
-    ctx.lineTo(left + topStep, top);
-    remaining -= topStep;
-    if (remaining > 0) {
-      const rightStep = Math.min(span, remaining);
-      ctx.lineTo(right, top + rightStep);
-      remaining -= rightStep;
-    }
-    if (remaining > 0) {
-      const bottomStep = Math.min(span, remaining);
-      ctx.lineTo(right - bottomStep, bottom);
-      remaining -= bottomStep;
-    }
-    if (remaining > 0) {
-      const leftStep = Math.min(span, remaining);
-      ctx.lineTo(left, bottom - leftStep);
-    }
-
-    ctx.stroke();
-    ctx.restore();
-  }
-
   function stopRecordingStream() {
     if (recordingRaf) {
       cancelAnimationFrame(recordingRaf);
@@ -222,114 +146,6 @@
     freezeBrokenOnDrawing = false;
   }
 
-  function wrapRecordingLines(ctx, text, widthLimit) {
-    const lines = [];
-    const sourceLines = normalizeMultilineText(text).split("\n");
-    for (const source of sourceLines) {
-      const words = source.split(" ").filter(Boolean);
-      if (!words.length) {
-        lines.push("");
-        continue;
-      }
-      let current = "";
-      for (const word of words) {
-        const candidate = current ? `${current} ${word}` : word;
-        if (ctx.measureText(candidate).width <= widthLimit) {
-          current = candidate;
-        } else if (current) {
-          lines.push(current);
-          current = word;
-        } else {
-          lines.push(word);
-          current = "";
-        }
-      }
-      if (current) lines.push(current);
-    }
-    return lines;
-  }
-
-  function drawRecordingOverlayText(
-    ctx,
-    text,
-    {
-      centerX,
-      anchorY,
-      width,
-      fontPx,
-      lineHeight,
-      anchor = "top",
-      textColor = "#FFF9D2",
-      secondaryTextColor = textColor,
-      secondaryTextColorFromLine = Number.POSITIVE_INFINITY,
-      bgColor = "#000000",
-    },
-  ) {
-    const clean = normalizeMultilineText(text);
-    if (!clean) return;
-    ctx.save();
-    ctx.font = `${Math.round(fontPx)}px "terminal-grotesque", sans-serif`;
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    const lines = wrapRecordingLines(ctx, clean, width);
-    if (!lines.length) {
-      ctx.restore();
-      return;
-    }
-    const totalH = lines.length * lineHeight;
-    const startY = anchor === "bottom" ? anchorY - totalH : anchorY;
-    for (let i = 0; i < lines.length; i += 1) {
-      const line = lines[i];
-      const lineW = ctx.measureText(line).width;
-      const y = startY + i * lineHeight;
-      ctx.fillStyle = bgColor;
-      ctx.fillRect(centerX - lineW / 2 - 6, y, lineW + 12, lineHeight);
-      ctx.fillStyle = i >= secondaryTextColorFromLine ? secondaryTextColor : textColor;
-      ctx.fillText(line, centerX, y + lineHeight / 2);
-    }
-    ctx.restore();
-  }
-
-  function pxNumber(value, fallback) {
-    const parsed = Number.parseFloat(value);
-    return Number.isFinite(parsed) ? parsed : fallback;
-  }
-
-  function getRecordingOverlayMetrics({
-    textSelector,
-    boxSelector,
-    fallbackFontPx,
-    fallbackLineHeight,
-    fallbackWidthPx,
-  }) {
-    const stageRef = Math.max(1, stageSizePx || 1);
-    const stageToRecord = RECORD_SIZE_PX / stageRef;
-    let fontPx = fallbackFontPx;
-    let lineHeight = fallbackLineHeight;
-    let widthPx = fallbackWidthPx;
-
-    if (browser) {
-      const textEl = document.querySelector(textSelector);
-      if (textEl) {
-        const style = window.getComputedStyle(textEl);
-        fontPx = pxNumber(style.fontSize, fallbackFontPx) * stageToRecord;
-        lineHeight =
-          pxNumber(style.lineHeight, fallbackLineHeight) * stageToRecord;
-      }
-
-      const boxEl = document.querySelector(boxSelector);
-      if (boxEl) {
-        const rect = boxEl.getBoundingClientRect();
-        widthPx = rect.width * stageToRecord;
-      }
-    }
-
-    return {
-      fontPx: Math.max(10, fontPx),
-      lineHeight: Math.max(10, lineHeight),
-      widthPx: Math.max(240, widthPx),
-    };
-  }
 
   function drawRecordingFrame() {
     if (!isRecording4K || !recordingCtx || !recordingCanvas || !p5CanvasEl)
@@ -387,6 +203,9 @@
       Math.round((stageSubtitleYPx - stageTopPx) * stageToRecord),
     );
     const introMetrics = getRecordingOverlayMetrics({
+      browser,
+      stageSizePx,
+      recordSizePx: RECORD_SIZE_PX,
       textSelector: ".chapterLegendDesc",
       boxSelector: ".chapterLegend",
       fallbackFontPx: RECORD_SIZE_PX * 0.02,
@@ -394,6 +213,9 @@
       fallbackWidthPx: RECORD_SIZE_PX * 0.78,
     });
     const editorialMetrics = getRecordingOverlayMetrics({
+      browser,
+      stageSizePx,
+      recordSizePx: RECORD_SIZE_PX,
       textSelector: ".editorialText",
       boxSelector: ".editorialTape",
       fallbackFontPx: RECORD_SIZE_PX * 0.019,
@@ -571,291 +393,8 @@
     noteSkimToken += 1;
   }
 
-  function getImageAspect(url) {
-    const meta = imageMeta.get(url);
-    if (!meta || !meta.w || !meta.h) return 1.4;
-    const aspect = meta.w / meta.h;
-    return aspect > 0 ? aspect : 1.4;
-  }
-
-  function phaseSectionDurationMs(phaseId, viewState, fallbackMs) {
-    const key = `${phaseId}-${viewState}`;
-    const notes = editorialNotes
-      .filter(
-        (note) => note.active && note.mode !== "target" && note.phase === key,
-      )
-      .sort((a, b) => a.order - b.order);
-    if (!notes.length) return fallbackMs;
-    const totalSec = notes.reduce(
-      (sum, note) => sum + Math.max(0.5, Number(note.durationSec) || 0.5),
-      0,
-    );
-    return Math.max(1000, Math.round(totalSec * 1000));
-  }
-
-  function applyEditorialPayload(payload) {
-    const refreshEditorialVisualImages = () => {
-      const urls = new Set();
-      for (const note of editorialNotes) {
-        const images = note?.visual?.images;
-        if (!Array.isArray(images)) continue;
-        for (const url of images) {
-          if (url) urls.add(url);
-        }
-        const collage = note?.visual?.collage;
-        if (!Array.isArray(collage)) continue;
-        for (const item of collage) {
-          if (item?.src) urls.add(item.src);
-        }
-      }
-      editorialVisualImageUrls = [...urls];
-    };
-
-    if (Array.isArray(payload)) {
-      editorialNotes = payload.map((note, index) => normalizeNote(note, index));
-      refreshEditorialVisualImages();
-      return;
-    }
-    if (!payload || typeof payload !== "object") return;
-
-    if (Array.isArray(payload.notes)) {
-      editorialNotes = payload.notes.map((note, index) =>
-        normalizeNote(note, index),
-      );
-      refreshEditorialVisualImages();
-    }
-
-    const intro = payload.intro;
-    if (!intro || typeof intro !== "object") return;
-
-    chapterTitleWindows = "";
-    chapterTitleScreens = "";
-    chapterTitleOpinions = "";
-    chapterTitleBroken = "";
-
-    if (typeof intro.windows === "string") {
-      introWindows = normalizeMultilineText(intro.windows);
-    }
-    if (typeof intro.screens === "string") {
-      introScreens = normalizeMultilineText(intro.screens);
-    }
-    if (typeof intro.opinions === "string") {
-      introOpinions = normalizeMultilineText(intro.opinions);
-    }
-    if (typeof intro.broken === "string") {
-      introBroken = normalizeMultilineText(intro.broken);
-    }
-
-    const chapterTitles =
-      intro.chapterTitles && typeof intro.chapterTitles === "object"
-        ? intro.chapterTitles
-        : null;
-    if (chapterTitles) {
-      if (typeof chapterTitles.windows === "string") {
-        chapterTitleWindows = normalizeText(chapterTitles.windows);
-      }
-      if (typeof chapterTitles.screens === "string") {
-        chapterTitleScreens = normalizeText(chapterTitles.screens);
-      }
-      if (typeof chapterTitles.opinions === "string") {
-        chapterTitleOpinions = normalizeText(chapterTitles.opinions);
-      }
-      if (typeof chapterTitles.broken === "string") {
-        chapterTitleBroken = normalizeText(chapterTitles.broken);
-      }
-    }
-
-    if (typeof intro.windowsTitle === "string") {
-      chapterTitleWindows = normalizeText(intro.windowsTitle);
-    }
-    if (typeof intro.screensTitle === "string") {
-      chapterTitleScreens = normalizeText(intro.screensTitle);
-    }
-    if (typeof intro.opinionsTitle === "string") {
-      chapterTitleOpinions = normalizeText(intro.opinionsTitle);
-    }
-    if (typeof intro.brokenTitle === "string") {
-      chapterTitleBroken = normalizeText(intro.brokenTitle);
-    }
-
-    if (typeof intro.text === "string") {
-      const legacyIntro = normalizeMultilineText(intro.text);
-      introWindows = legacyIntro;
-      introScreens = legacyIntro;
-      introOpinions = legacyIntro;
-      introBroken = legacyIntro;
-    }
-  }
-
-  function resolveActiveNote(
-    phaseId,
-    phaseElapsedSec,
-    viewState,
-    focusTarget = null,
-    viewElapsedSec = phaseElapsedSec,
-  ) {
-    const stateAlias = `${phaseId}-${viewState}`;
-    const candidates = editorialNotes
-      .filter(
-        (note) =>
-          note.active &&
-          (note.phase === phaseId ||
-            note.phase === stateAlias ||
-            note.phase === "any"),
-      )
-      .sort((a, b) => a.order - b.order);
-    if (candidates.length === 0) return null;
-
-    const byTarget = candidates.filter((note) => {
-      if (note.mode !== "target" || !note.targetId || !focusTarget?.id)
-        return false;
-      if (note.targetId !== focusTarget.id) return false;
-      if (note.targetStep === "any") return true;
-      return note.targetStep === focusTarget.step;
-    });
-    if (byTarget.length) return byTarget[byTarget.length - 1];
-
-    const stateNotes = candidates.filter(
-      (note) => note.mode !== "target" && note.phase === stateAlias,
-    );
-    if (stateNotes.length)
-      return sequenceNoteByDuration(stateNotes, viewElapsedSec, {
-        loop: true,
-        restartPauseSec: NOTE_RESTART_PAUSE_SEC,
-        returnNullDuringPause: true,
-      });
-
-    const phaseNotes = candidates.filter(
-      (note) => note.mode !== "target" && note.phase === phaseId,
-    );
-    if (phaseNotes.length)
-      return sequenceNoteByDuration(phaseNotes, phaseElapsedSec);
-
-    const anyNotes = candidates.filter(
-      (note) => note.mode !== "target" && note.phase === "any",
-    );
-    if (anyNotes.length)
-      return sequenceNoteByDuration(anyNotes, phaseElapsedSec);
-
-    return null;
-  }
-
-  function editorialTimelineFor(phaseId, viewState) {
-    const stateAlias = `${phaseId}-${viewState}`;
-    const stateNotes = editorialNotes
-      .filter(
-        (note) =>
-          note.active && note.mode !== "target" && note.phase === stateAlias,
-      )
-      .sort((a, b) => a.order - b.order);
-    if (stateNotes.length) {
-      return {
-        key: `state:${stateAlias}`,
-        notes: stateNotes,
-        elapsedMode: "view",
-        loop: true,
-        restartPauseSec: NOTE_RESTART_PAUSE_SEC,
-      };
-    }
-
-    const phaseNotes = editorialNotes
-      .filter(
-        (note) =>
-          note.active && note.mode !== "target" && note.phase === phaseId,
-      )
-      .sort((a, b) => a.order - b.order);
-    if (phaseNotes.length) {
-      return {
-        key: `phase:${phaseId}`,
-        notes: phaseNotes,
-        elapsedMode: "phase",
-        loop: false,
-        restartPauseSec: 0,
-      };
-    }
-
-    const anyNotes = editorialNotes
-      .filter(
-        (note) => note.active && note.mode !== "target" && note.phase === "any",
-      )
-      .sort((a, b) => a.order - b.order);
-    if (anyNotes.length) {
-      return {
-        key: "any",
-        notes: anyNotes,
-        elapsedMode: "phase",
-        loop: false,
-        restartPauseSec: 0,
-      };
-    }
-
-    return {
-      key: "",
-      notes: [],
-      elapsedMode: "phase",
-      loop: false,
-      restartPauseSec: 0,
-    };
-  }
-
-  function stateNotesForSkim(phaseId, viewState) {
-    const stateAlias = `${phaseId}-${viewState}`;
-    return editorialNotes
-      .filter(
-        (note) =>
-          note.active && note.mode !== "target" && note.phase === stateAlias,
-      )
-      .sort((a, b) => a.order - b.order);
-  }
-
-  function chapterSkimDescriptors(phaseId, phaseMode) {
-    const focusState = phaseMode === "broken" ? "broken-seq" : "focus";
-    const states = ["grid", focusState];
-    return states
-      .map((viewState) => {
-        const notes = stateNotesForSkim(phaseId, viewState);
-        return {
-          viewState,
-          notes,
-          key: `state:${phaseId}-${viewState}`,
-        };
-      })
-      .filter((item) => item.notes.length > 0);
-  }
-
-  function introForPhase(phaseId) {
-    if (phaseId === "windows") return introWindows;
-    if (phaseId === "screens") return introScreens;
-    if (phaseId === "opinions") return introOpinions;
-    if (phaseId === "broken") return introBroken;
-    return "";
-  }
-
-  function chapterMetaForPhase(phaseId) {
-    const idx = TIMELINE.findIndex((item) => item.id === phaseId);
-    if (idx < 0) return { step: "", title: "" };
-    const fallbackTitle = TIMELINE[idx].label || "";
-    const overrideTitle =
-      phaseId === "windows"
-        ? chapterTitleWindows
-        : phaseId === "screens"
-          ? chapterTitleScreens
-          : phaseId === "opinions"
-            ? chapterTitleOpinions
-            : phaseId === "broken"
-              ? chapterTitleBroken
-              : "";
-    return {
-      step: `${idx + 1}/${TIMELINE.length}`,
-      title: overrideTitle || fallbackTitle,
-    };
-  }
-
-  function legendDescriptionForPhase() {
-    return normalizeMultilineText(SHARED_CHAPTER_LEGEND_TEXT);
-  }
-
   $: records = rows.map(normalizeRecord);
+  $: editorialRuntime = buildEditorialRuntime(editorialNotes);
   $: windowsItems = sortRecords(
     records.filter((row) => row.mode === "windows" && row.imageUrl),
   );
@@ -929,14 +468,14 @@
 
     windowsLayout = buildMasonryLayout(
       windowsItems,
-      (item) => getImageAspect(item.imageUrl),
+      (item) => imageAspectFromMeta(imageMeta, item.imageUrl),
       windowsCols,
       baseW,
       0,
     );
     screensLayout = buildMasonryLayout(
       screensItems,
-      (item) => getImageAspect(item.imageUrl),
+      (item) => imageAspectFromMeta(imageMeta, item.imageUrl),
       screensCols,
       baseW,
       0,
@@ -956,7 +495,10 @@
     brokenLayout = buildMasonryLayout(
       brokenChains,
       (chain) =>
-        getImageAspect(chain.image?.imageUrl || chain.drawing?.imageUrl || ""),
+        imageAspectFromMeta(
+          imageMeta,
+          chain.image?.imageUrl || chain.drawing?.imageUrl || "",
+        ),
       brokenCols,
       Math.round(baseW * 1.02),
       0,
@@ -970,11 +512,9 @@
     stageSizePx = Math.max(0, Math.min(w, h));
     stageLeftPx = Math.max(0, (w - stageSizePx) / 2);
     stageTopPx = Math.max(0, (h - stageSizePx) / 2);
-    stageBottomPx = stageTopPx + stageSizePx;
     stageTitleYPx = stageTopPx + 8;
     stageCenterXPx = stageLeftPx + stageSizePx / 2;
-    stageCenterYPx = stageTopPx + stageSizePx / 2;
-    stageSubtitleYPx = stageBottomPx - 8;
+    stageSubtitleYPx = stageTopPx + stageSizePx - 8;
     editorialWidthPx = Math.max(0, Math.round(stageSizePx * 0.62));
     stageProgressPath = buildStageProgressPath(stageProgressRatio);
   }
@@ -996,7 +536,13 @@
       const editorial = await fetch("/cables_editorial.json")
         .then((res) => res.json())
         .catch(() => null);
-      applyEditorialPayload(editorial);
+      const parsed = parseEditorialPayload(editorial, normalizeNote);
+      editorialNotes = parsed.notes;
+      editorialVisualImageUrls = collectEditorialVisualImageUrls(editorialNotes);
+      chapterTitleWindows = parsed.chapterTitles.windows;
+      chapterTitleScreens = parsed.chapterTitles.screens;
+      chapterTitleOpinions = parsed.chapterTitles.opinions;
+      chapterTitleBroken = parsed.chapterTitles.broken;
     })();
   });
 
@@ -1026,117 +572,6 @@
     );
 
     return null;
-  }
-
-  function extractInlineImageIds(value) {
-    const raw = String(value || "");
-    if (!raw) return [];
-    const matches = raw.match(/\b[A-Za-z0-9_-]{20,}\b/g) || [];
-    return [...new Set(matches)];
-  }
-
-  function extractInlineRecordIds(value) {
-    const raw = String(value || "");
-    if (!raw) return [];
-    const matches = [...raw.matchAll(/\[\[id:([A-Za-z0-9_-]{3,})\]\]/g)];
-    return [...new Set(matches.map((match) => match[1]).filter(Boolean))];
-  }
-
-  function stripInlineImageIds(value) {
-    const raw = normalizeMultilineText(value);
-    if (!raw) return "";
-    const lines = raw
-      .split("\n")
-      .map((line) =>
-        line
-          .replace(/\[\[id:[A-Za-z0-9_-]{3,}\]\]/g, "")
-          .replace(/\b[A-Za-z0-9_-]{20,}\b/g, "")
-          .replace(/[ \t]{2,}/g, " ")
-          .trim(),
-      )
-      .filter((line) => line.length > 0);
-    return lines.join("\n");
-  }
-
-  function imageIdFromUrl(url) {
-    const raw = String(url || "");
-    if (!raw) return "";
-    const match = raw.match(/\/([A-Za-z0-9_-]{20,})\.[A-Za-z0-9]+(?:$|\?)/);
-    return match?.[1] || "";
-  }
-
-  function recordMatchesImageId(record, imageId) {
-    if (!record || !imageId) return false;
-    if (record.imageUrl && imageIdFromUrl(record.imageUrl) === imageId)
-      return true;
-    if (
-      record.image?.imageUrl &&
-      imageIdFromUrl(record.image.imageUrl) === imageId
-    )
-      return true;
-    if (
-      record.drawing?.imageUrl &&
-      imageIdFromUrl(record.drawing.imageUrl) === imageId
-    )
-      return true;
-    return false;
-  }
-
-  function resolveNoteAnchorRecordId(note, orderedRecords) {
-    if (!note || !orderedRecords.length) return "";
-    const explicitRecordId = normalizeText(note.anchorId || "");
-    if (explicitRecordId) {
-      const direct = orderedRecords.find((item) => item.id === explicitRecordId);
-      if (direct?.id) return direct.id;
-      const viaAlias = orderedRecords.find((item) =>
-        Array.isArray(item.aliasIds) && item.aliasIds.includes(explicitRecordId),
-      );
-      if (viaAlias?.id) return viaAlias.id;
-    }
-
-    const explicitImageId = normalizeText(note.anchorImageId || "");
-    if (explicitImageId) {
-      const record = orderedRecords.find((item) =>
-        recordMatchesImageId(item, explicitImageId),
-      );
-      if (record?.id) return record.id;
-    }
-
-    const noteText = note.text || "";
-    const recordIds = extractInlineRecordIds(noteText);
-    if (recordIds.length && orderedRecords.length) {
-      const recordIdSet = new Set(orderedRecords.map((item) => item.id));
-      for (const recordId of recordIds) {
-        if (recordIdSet.has(recordId)) return recordId;
-        const viaAlias = orderedRecords.find((item) =>
-          Array.isArray(item.aliasIds) && item.aliasIds.includes(recordId),
-        );
-        if (viaAlias?.id) return viaAlias.id;
-      }
-    }
-
-    const imageIds = extractInlineImageIds(noteText);
-    if (!imageIds.length || !orderedRecords.length) return "";
-    for (const imageId of imageIds) {
-      const record = orderedRecords.find((item) =>
-        recordMatchesImageId(item, imageId),
-      );
-      if (record?.id) return record.id;
-    }
-    return "";
-  }
-
-  function isTypingElementFocused() {
-    if (!browser) return false;
-    const el = document.activeElement;
-    if (!el) return false;
-    const tag = el.tagName;
-    return (
-      tag === "INPUT" ||
-      tag === "TEXTAREA" ||
-      tag === "SELECT" ||
-      el.isContentEditable
-    );
   }
 
   const sketch = (s) => {
@@ -1176,13 +611,19 @@
     let brokenAnchorSettledAtSec = 0;
     let brokenFocusHoldOffsetSec = 0;
     let brokenFocusHoldNoteId = "";
-    let lastVisualNoteId = "";
-    let lastVisualSignature = "";
     let zoomToSettledNoteId = "";
     let zoomToReleasingNoteId = "";
     let zoomToReleasedNoteId = "";
     let zoomToHoldOffsetSec = 0;
     let font;
+    let phasePreloadCursor = 0;
+    let editorialPreloadCursor = 0;
+    const PRELOAD_BATCH_SIZE = 24;
+    let activeFrameRate = 30;
+    const visualState = {
+      lastVisualNoteId: "",
+      lastVisualSignature: "",
+    };
 
     function resetPhaseProgress(nowMs = 0) {
       phaseElapsedMs = 0;
@@ -1206,12 +647,13 @@
       brokenAnchorSettledAtSec = 0;
       brokenFocusHoldOffsetSec = 0;
       brokenFocusHoldNoteId = "";
-      lastVisualNoteId = "";
-      lastVisualSignature = "";
+      visualState.lastVisualNoteId = "";
+      visualState.lastVisualSignature = "";
       zoomToSettledNoteId = "";
       zoomToReleasingNoteId = "";
       zoomToReleasedNoteId = "";
       zoomToHoldOffsetSec = 0;
+      phasePreloadCursor = 0;
     }
 
     function jumpPhase(offset = 1, nowMs = 0) {
@@ -1261,487 +703,63 @@
       };
     }
 
-    function setCameraTarget(target, now) {
-      if (!camera.initialized) {
-        camera.initialized = true;
-        camera.x = target.x;
-        camera.y = target.y;
-        camera.scale = target.scale;
-        camera.toX = target.x;
-        camera.toY = target.y;
-        camera.toScale = target.scale;
-        camera.lastMs = now;
-        return;
-      }
-      camera.toX = target.x;
-      camera.toY = target.y;
-      camera.toScale = target.scale;
-    }
+    function preloadPhaseBatch(type, ordered) {
+      if (!ordered.length) return;
+      const batchCount = Math.min(PRELOAD_BATCH_SIZE, ordered.length);
 
-    function tickCamera(now, viewState = "focus", focusAdvanceMs = 9800) {
-      if (!camera.initialized) return;
-      const dt = Math.max(1, now - camera.lastMs);
-      camera.lastMs = now;
-
-      const dx = camera.toX - camera.x;
-      const dy = camera.toY - camera.y;
-      const distance = Math.hypot(dx, dy);
-      const ds = camera.toScale - camera.scale;
-
-      if (viewState === "focus" || viewState === "broken-seq") {
-        const followMs =
-          viewState === "broken-seq"
-            ? Math.max(900, Math.min(5200, focusAdvanceMs * 0.85))
-            : Math.max(120, Math.min(1200, focusAdvanceMs * 0.22));
-        const posBlend = Math.min(1, dt / followMs);
-        const scaleBlend = Math.min(1, dt / Math.max(90, followMs * 0.72));
-        camera.x += dx * posBlend;
-        camera.y += dy * posBlend;
-        camera.scale += ds * scaleBlend;
-        return;
-      }
-
-      const posSpeed = viewState === "grid" ? 0.09 : 0.045;
-      const scaleSpeed = viewState === "grid" ? 0.00018 : 0.0003;
-      const maxPosStep = posSpeed * dt;
-      if (distance <= maxPosStep || distance === 0) {
-        camera.x = camera.toX;
-        camera.y = camera.toY;
-      } else {
-        const t = maxPosStep / distance;
-        camera.x += dx * t;
-        camera.y += dy * t;
-      }
-      const maxScaleStep = scaleSpeed * dt;
-      if (Math.abs(ds) <= maxScaleStep) {
-        camera.scale = camera.toScale;
-      } else {
-        camera.scale += Math.sign(ds) * maxScaleStep;
-      }
-    }
-
-    function drawImage(url, entry, alpha = 1, desaturate = false) {
-      const image = ensureImage(s, url);
-      if (!image) {
-        s.noStroke();
-        s.fill(...VIEWS_PALETTE.missing, alpha);
-        s.rect(entry.x, entry.y, entry.w, entry.h);
-        return;
-      }
-
-      const scale = Math.min(entry.w / image.width, entry.h / image.height);
-      const drawW = image.width * scale;
-      const drawH = image.height * scale;
-      const x = entry.x - drawW / 2;
-      const y = entry.y - drawH / 2;
-
-      const ctx = s.drawingContext;
-      ctx.save();
-      if (desaturate) ctx.filter = "grayscale(1)";
-      s.tint(255, 255 * alpha);
-      s.image(image, x, y, drawW, drawH);
-      s.noTint();
-      ctx.restore();
-    }
-
-    function drawStageImageCover(image, stageX, stageY, stageSize, alpha = 1) {
-      if (!image) return;
-      const fit = Math.max(stageSize / image.width, stageSize / image.height);
-      const drawW = image.width * fit;
-      const drawH = image.height * fit;
-      const x = stageX + (stageSize - drawW) / 2;
-      const y = stageY + (stageSize - drawH) / 2;
-
-      const ctx = s.drawingContext;
-      ctx.save();
-      ctx.globalAlpha = Math.max(0, Math.min(1, alpha));
-      s.image(image, x, y, drawW, drawH);
-      ctx.restore();
-    }
-
-    function drawStageImageContained(
-      image,
-      stageX,
-      stageY,
-      stageSize,
-      widthRatio = 0.6,
-      heightRatio = 1,
-      alpha = 1,
-    ) {
-      if (!image) return;
-      const maxW = stageSize * Math.max(0.05, Math.min(1, widthRatio));
-      const maxH = stageSize * Math.max(0.05, Math.min(1, heightRatio));
-      const fit = Math.min(maxW / image.width, maxH / image.height);
-      const drawW = image.width * fit;
-      const drawH = image.height * fit;
-      const x = stageX + (stageSize - drawW) / 2;
-      const y = stageY + (stageSize - drawH) / 2;
-
-      const ctx = s.drawingContext;
-      ctx.save();
-      ctx.globalAlpha = Math.max(0, Math.min(1, alpha));
-      s.image(image, x, y, drawW, drawH);
-      ctx.restore();
-    }
-
-    function drawNoteVisual(note, elapsedInNoteSec, noteDurationSec, stageX, stageY, stageSize) {
-      const visual = note?.visual;
-      if (!visual || typeof visual !== "object") return { drawn: false, hideGrid: false };
-
-      const mode = String(visual.mode || "").trim().toLowerCase();
-      const shouldHideGrid = visual.hideGrid !== false;
-      if (!mode) return { drawn: false, hideGrid: shouldHideGrid };
-      const noteId = String(note?.id || "");
-      const visualSignature =
-        mode === "image" || mode === "single-image"
-          ? `${mode}|${(visual.images || []).join(",")}|${visual.widthRatio}|${visual.heightRatio}`
-          : mode === "collage"
-            ? `${mode}|${(visual.collage || [])
-                .map((item) => `${item.src}:${item.x}:${item.y}:${item.w}:${item.h}:${item.rotateDeg}`)
-                .join(";")}`
-            : `${mode}|${(visual.images || []).join(",")}`;
-
-      if (mode === "blackout" || mode === "black") {
-        s.push();
-        s.rectMode(s.CORNER);
-        s.noStroke();
-        s.fill(0, 0, 0, 1);
-        s.rect(stageX, stageY, stageSize, stageSize);
-        s.pop();
-        return { drawn: true, hideGrid: shouldHideGrid };
-      }
-
-      const totalMs = Math.max(
-        1,
-        Math.round(Math.max(0.5, noteDurationSec || 0.5) * 1000),
-      );
-      const elapsedMs = Math.max(
-        0,
-        Math.min(
-          totalMs - 1,
-          Math.round(Math.max(0, elapsedInNoteSec || 0) * 1000),
-        ),
-      );
-      const sameVisualAsPreviousNote =
-        noteId &&
-        noteId !== lastVisualNoteId &&
-        visualSignature &&
-        visualSignature === lastVisualSignature;
-      const fadeInMs = sameVisualAsPreviousNote
-        ? 0
-        : Math.max(0, Number(visual.fadeInMs) || 0);
-      const fadeInAlpha =
-        fadeInMs > 0
-          ? Math.max(0, Math.min(1, elapsedMs / fadeInMs))
-          : 1;
-
-      if (mode === "image" || mode === "single-image") {
-        const src = Array.isArray(visual.images) ? visual.images[0] : "";
-        const image = ensureImage(s, src);
-        drawStageImageContained(
-          image,
-          stageX,
-          stageY,
-          stageSize,
-          Number(visual.widthRatio) || 0.6,
-          Number(visual.heightRatio) || 1,
-          fadeInAlpha,
-        );
-        lastVisualNoteId = noteId;
-        lastVisualSignature = visualSignature;
-        return { drawn: true, hideGrid: shouldHideGrid };
-      }
-
-      if (mode === "collage") {
-        const items = Array.isArray(visual.collage) ? visual.collage : [];
-        for (const item of items) {
-          const image = ensureImage(s, item.src);
-          if (!image) continue;
-          const maxW = stageSize * (Number(item.w) || 0.35);
-          const maxH = stageSize * (Number(item.h) > 0 ? Number(item.h) : 0.42);
-          const fit = Math.min(maxW / image.width, maxH / image.height);
-          const drawW = image.width * fit;
-          const drawH = image.height * fit;
-          const cx = stageX + stageSize * (Number(item.x) || 0.5);
-          const cy = stageY + stageSize * (Number(item.y) || 0.5);
-          s.push();
-          s.translate(cx, cy);
-          s.rotate(s.radians(Number(item.rotateDeg) || 0));
-          const ctx = s.drawingContext;
-          ctx.save();
-          ctx.globalAlpha = fadeInAlpha;
-          s.image(image, -drawW / 2, -drawH / 2, drawW, drawH);
-          ctx.restore();
-          s.pop();
+      if (type === "image") {
+        for (let i = 0; i < batchCount; i += 1) {
+          const idx = (phasePreloadCursor + i) % ordered.length;
+          const record = ordered[idx];
+          if (record?.imageUrl) ensureImage(s, record.imageUrl);
         }
-        lastVisualNoteId = noteId;
-        lastVisualSignature = visualSignature;
-        return { drawn: true, hideGrid: shouldHideGrid };
-      }
-
-      if (mode !== "images" && mode !== "stage-images") {
-        return { drawn: true, hideGrid: shouldHideGrid };
-      }
-
-      const frames = Array.isArray(visual.images) ? visual.images : [];
-      if (!frames.length) return { drawn: true, hideGrid: shouldHideGrid };
-
-      const segmentMs = Math.max(1, totalMs / frames.length);
-      const index = Math.min(frames.length - 1, Math.floor(elapsedMs / segmentMs));
-      const localMs = elapsedMs - index * segmentMs;
-      const useFade = visual.crossfade !== false;
-      const fadeMs = Math.max(80, Math.min(220, segmentMs * 0.18));
-      const alpha = useFade ? Math.max(0, Math.min(1, localMs / fadeMs)) : 1;
-
-      const current = ensureImage(s, frames[index]);
-      drawStageImageCover(current, stageX, stageY, stageSize, alpha);
-      lastVisualNoteId = noteId;
-      lastVisualSignature = visualSignature;
-      return { drawn: true, hideGrid: shouldHideGrid };
-    }
-
-    function drawCardMeta(record, entry, alpha = 1) {
-      if (!record) return;
-
-      const location = record.location || "Unknown";
-      const country = record.country
-        ? `, ${String(record.country).toUpperCase()}`
-        : "";
-      const line1 = `${location}${country}`;
-
-      s.push();
-      s.rectMode(s.CORNER);
-      s.textAlign(s.LEFT, s.TOP);
-      const fontSize = Math.max(3.8, Math.min(5.4, entry.w * 0.018));
-      s.textSize(fontSize);
-
-      const textWidth = s.textWidth(line1);
-      const padX = 2;
-      const padY = 1;
-      const boxW = textWidth + padX * 2;
-      const boxH = fontSize + padY * 2;
-      const boxX = entry.x - entry.w / 2;
-      const boxY = entry.y - entry.h / 2;
-
-      s.noStroke();
-      s.fill(0, 0, 0, 1);
-      s.rect(boxX, boxY, boxW, boxH);
-      s.fill(...VIEWS_PALETTE.textPrimary, 1 * alpha);
-      s.text(line1, boxX + padX, boxY + padY);
-      s.pop();
-    }
-
-    function drawText(
-      text,
-      entry,
-      focused = false,
-      alpha = 1,
-      mode = "top-left",
-      sizeScale = 1,
-      excerptLimit = null,
-      leadingRatio = null,
-      textColor = VIEWS_PALETTE.textPrimary,
-    ) {
-      const boxX = entry.x - entry.w / 2;
-      const boxY = entry.y - entry.h / 2;
-      const padX = 2;
-      const padY = 1;
-      const textBody = excerpt(text, excerptLimit ?? (focused ? 900 : 360));
-
-      const fitLineWithEllipsis = (line, widthLimit) => {
-        const suffix = "...";
-        if (s.textWidth(line) <= widthLimit) return line;
-        let out = line;
-        while (out.length > 1 && s.textWidth(`${out}${suffix}`) > widthLimit) {
-          out = out.slice(0, -1);
+      } else if (type === "broken") {
+        for (let i = 0; i < batchCount; i += 1) {
+          const idx = (phasePreloadCursor + i) % ordered.length;
+          const chain = ordered[idx];
+          if (chain?.image?.imageUrl) ensureImage(s, chain.image.imageUrl);
+          if (chain?.drawing?.imageUrl) ensureImage(s, chain.drawing.imageUrl);
         }
-        return `${out}${suffix}`;
-      };
-
-      const wrapLines = (raw, widthLimit) => {
-        const lines = [];
-        const sourceLines = normalizeMultilineText(raw).split("\n");
-        for (const source of sourceLines) {
-          const words = source.split(" ").filter(Boolean);
-          if (!words.length) {
-            lines.push("");
-            continue;
-          }
-          let current = "";
-          for (const word of words) {
-            const candidate = current ? `${current} ${word}` : word;
-            if (s.textWidth(candidate) <= widthLimit) {
-              current = candidate;
-              continue;
-            }
-            if (current) lines.push(current);
-            current = word;
-            while (s.textWidth(current) > widthLimit && current.length > 1) {
-              let cut = current.length;
-              while (
-                cut > 1 &&
-                s.textWidth(current.slice(0, cut)) > widthLimit
-              ) {
-                cut -= 1;
-              }
-              lines.push(current.slice(0, cut));
-              current = current.slice(cut);
-            }
-          }
-          if (current) lines.push(current);
-        }
-        return lines.length ? lines : [""];
-      };
-
-      s.push();
-      s.rectMode(s.CORNER);
-      s.fill(...textColor, alpha);
-      s.textAlign(
-        mode === "center" ? s.CENTER : s.LEFT,
-        mode === "center" ? s.CENTER : s.TOP,
-      );
-      const regularSize = 7 * sizeScale;
-      const focusSize = 10 * sizeScale;
-      const appliedSize = focused ? focusSize : regularSize;
-      const defaultLeadingRatio = mode === "center" ? 0.6 : 0.74;
-      const rawLeading = appliedSize * (leadingRatio ?? defaultLeadingRatio);
-      const leading =
-        mode === "center"
-          ? Math.max(rawLeading, appliedSize * 1.02)
-          : rawLeading;
-      s.textSize(appliedSize);
-      s.textLeading(leading);
-
-      if (mode === "center") {
-        const blockW = Math.max(1, entry.w * 0.88);
-        const maxLines = Math.max(1, Math.floor((entry.h * 0.88) / leading));
-        let lines = wrapLines(textBody, blockW);
-        if (lines.length > maxLines) {
-          lines = lines.slice(0, maxLines);
-          lines[maxLines - 1] = fitLineWithEllipsis(
-            lines[maxLines - 1],
-            blockW,
-          );
-        }
-
-        const totalH = Math.max(leading, lines.length * leading);
-        const startY = entry.y - totalH / 2 + leading / 2;
-
-        s.noStroke();
-        for (let lineIndex = 0; lineIndex < lines.length; lineIndex += 1) {
-          const line = lines[lineIndex];
-          const lineY = startY + lineIndex * leading;
-          const lineW = Math.min(blockW, s.textWidth(line) + 8);
-          const lineX = entry.x - lineW / 2;
-          const lineTop = lineY - leading / 2;
-
-          s.fill(0, 0, 0, 1);
-          s.rect(lineX, lineTop, lineW, leading);
-          s.fill(...textColor, alpha);
-          s.text(line, entry.x, lineY);
-        }
-        s.pop();
-        return;
       }
 
-      const blockW =
-        mode === "center"
-          ? Math.max(1, entry.w * 0.88)
-          : Math.max(1, entry.w - padX * 2);
-      const approxLines = Math.max(
-        1,
-        Math.ceil(s.textWidth(textBody) / Math.max(1, blockW)),
-      );
-      const blockH = Math.max(
-        appliedSize + 2,
-        Math.min(entry.h, approxLines * leading + 2),
-      );
-      const blockX = mode === "center" ? entry.x - blockW / 2 : boxX;
-      const blockY = mode === "center" ? entry.y - blockH / 2 : boxY;
-
-      s.noStroke();
-      s.fill(0, 0, 0, 1);
-      s.rect(blockX, blockY, blockW, blockH);
-
-      const ctx = s.drawingContext;
-      ctx.save();
-      ctx.beginPath();
-      ctx.rect(blockX, blockY, blockW, blockH);
-      ctx.clip();
-
-      s.fill(...textColor, alpha);
-      s.text(
-        textBody,
-        mode === "center" ? blockX + blockW / 2 : blockX + padX,
-        mode === "center" ? blockY + blockH / 2 : blockY + padY,
-        mode === "center" ? blockW : Math.max(1, blockW - padX * 2),
-        mode === "center" ? blockH : Math.max(1, blockH - padY * 2),
-      );
-      ctx.restore();
-      s.pop();
+      phasePreloadCursor = (phasePreloadCursor + batchCount) % ordered.length;
     }
 
-    function drawBrokenState(
-      chain,
-      entry,
-      state = "image",
-      alpha = 1,
-      desaturate = false,
-    ) {
-      if (state === "image" && chain.image?.imageUrl) {
-        drawImage(chain.image.imageUrl, entry, alpha, desaturate);
-        return;
+    function preloadEditorialBatch() {
+      if (!editorialVisualImageUrls.length) return;
+      const batchCount = Math.min(
+        PRELOAD_BATCH_SIZE,
+        editorialVisualImageUrls.length,
+      );
+      for (let i = 0; i < batchCount; i += 1) {
+        const idx = (editorialPreloadCursor + i) % editorialVisualImageUrls.length;
+        const imageUrl = editorialVisualImageUrls[idx];
+        if (imageUrl) ensureImage(s, imageUrl);
       }
-      if (state === "drawing" && chain.drawing?.imageUrl) {
-        drawImage(chain.drawing.imageUrl, entry, alpha, desaturate);
-        return;
-      }
-      if (state === "text" && chain.text?.text) {
-        drawText(
-          chain.text.text,
-          entry,
-          true,
-          alpha,
-          "center",
-          BROKEN_TEXT_STYLE.sizeScale,
-          BROKEN_TEXT_STYLE.excerpt,
-          BROKEN_TEXT_STYLE.leadingRatio,
-        );
-        return;
-      }
-      if (chain.image?.imageUrl) {
-        drawImage(chain.image.imageUrl, entry, alpha, desaturate);
-        return;
-      }
-      if (chain.drawing?.imageUrl) {
-        drawImage(chain.drawing.imageUrl, entry, alpha, desaturate);
-        return;
-      }
-      if (chain.text?.text) {
-        drawText(
-          chain.text.text,
-          entry,
-          false,
-          alpha,
-          "center",
-          BROKEN_TEXT_STYLE.sizeScale,
-          BROKEN_TEXT_STYLE.excerpt,
-          BROKEN_TEXT_STYLE.leadingRatio,
-        );
-        return;
-      }
-
-      s.noStroke();
-      s.fill(...VIEWS_PALETTE.missing, alpha);
-      s.rect(entry.x, entry.y, entry.w, entry.h);
+      editorialPreloadCursor =
+        (editorialPreloadCursor + batchCount) % editorialVisualImageUrls.length;
     }
 
-    function brokenMetaForState(chain, state = "image") {
-      if (state === "image" && chain.image) return chain.image;
-      if (state === "text" && chain.text) return chain.text;
-      if (state === "drawing" && chain.drawing) return chain.drawing;
-      return chain.image || chain.text || chain.drawing || null;
-    }
+    const {
+      drawImage,
+      drawNoteVisual,
+      drawCardMeta,
+      drawText,
+      drawBrokenState,
+      brokenMetaForState,
+    } = createSketchRenderers({
+      s,
+      ensureImage,
+      visualState,
+    });
+
+    const setCameraTargetForSketch = (target, now) => {
+      setCameraTarget(camera, target, now);
+    };
+
+    const tickCameraForSketch = (now, viewState = "focus", focusAdvanceMs = 9800) => {
+      tickCamera(camera, now, viewState, focusAdvanceMs);
+    };
 
     s.preload = () => {
       font = s.loadFont("terminal-grotesque.woff");
@@ -1757,7 +775,7 @@
       s.frameRate(30);
 
       s.keyPressed = () => {
-        if (isTypingElementFocused()) return true;
+        if (isTypingElementFocused(browser)) return true;
 
         if (s.key === " ") {
           paused = !paused;
@@ -1847,6 +865,13 @@
     };
 
     s.draw = () => {
+      const targetFrameRate =
+        paused && !isRecording4K && skimZoomRunMs <= 0 ? 12 : 30;
+      if (targetFrameRate !== activeFrameRate) {
+        s.frameRate(targetFrameRate);
+        activeFrameRate = targetFrameRate;
+      }
+
       if (width && height && (s.width !== width || s.height !== height)) {
         s.resizeCanvas(width, height);
       }
@@ -1894,15 +919,8 @@
         lastFrameMs = now;
         return;
       }
-      if (type === "image") {
-        for (const record of ordered) ensureImage(s, record.imageUrl);
-      } else if (type === "broken") {
-        for (const chain of ordered) {
-          if (chain?.image?.imageUrl) ensureImage(s, chain.image.imageUrl);
-          if (chain?.drawing?.imageUrl) ensureImage(s, chain.drawing.imageUrl);
-        }
-      }
-      for (const imageUrl of editorialVisualImageUrls) ensureImage(s, imageUrl);
+      preloadPhaseBatch(type, ordered);
+      preloadEditorialBatch();
 
       if (lastFrameMs === 0) lastFrameMs = now;
       const frameDeltaMs = Math.max(0, Math.min(120, now - lastFrameMs));
@@ -1921,7 +939,7 @@
         skimZoomRunMs = Math.max(0, skimZoomRunMs - frameDeltaMs);
       }
       const elapsed = phaseElapsedMs;
-      const overviewMs = phaseSectionDurationMs(
+      const overviewMs = editorialRuntime.phaseSectionDurationMs(
         phase.id,
         "grid",
         phase.overviewMs || 0,
@@ -1944,7 +962,10 @@
             ? { x: camera.x, y: camera.y, scale: camera.scale }
             : { x: 0, y: 0, scale: 1 };
           const focusState = phase.mode === "broken" ? "broken-seq" : "focus";
-          const focusTimeline = editorialTimelineFor(phase.id, focusState);
+          const focusTimeline = editorialRuntime.editorialTimelineFor(
+            phase.id,
+            focusState,
+          );
           const firstFocusNote = focusTimeline.notes[0] || null;
           if (firstFocusNote) {
             const preAnchorId = resolveNoteAnchorRecordId(
@@ -1981,7 +1002,10 @@
           : viewState === "zoom-in"
             ? 0
             : focusElapsedMs / 1000;
-      const preTimeline = editorialTimelineFor(phase.id, preNoteViewState);
+      const preTimeline = editorialRuntime.editorialTimelineFor(
+        phase.id,
+        preNoteViewState,
+      );
       const preBaseElapsedSec =
         preTimeline.elapsedMode === "view" ? preViewElapsedSec : elapsed / 1000;
       const preElapsedOffset =
@@ -2036,7 +1060,7 @@
       const baseFocusAdvanceMs = Math.max(1, phase.focusAdvanceMs || 1);
       const focusNarrativeState =
         phase.mode === "broken" ? "broken-seq" : "focus";
-      const focusNarrativeMs = phaseSectionDurationMs(
+      const focusNarrativeMs = editorialRuntime.phaseSectionDurationMs(
         phase.id,
         focusNarrativeState,
         0,
@@ -2065,6 +1089,14 @@
         phase.mode === "broken" && syncFocusToEditorial && focusNarrativeMs > 0
           ? Math.max(0, focusElapsedMs + brokenFocusHoldMs)
           : focusElapsedMs;
+      const zoomToCompletionOffsetMs = Math.min(
+        0,
+        Math.round(zoomToHoldOffsetSec * 1000),
+      );
+      const focusElapsedForCompletionWithZoomMs = Math.max(
+        0,
+        focusElapsedForCompletionMs + zoomToCompletionOffsetMs,
+      );
       const autoplayProgress =
         phase.mode === "broken"
           ? 0
@@ -2074,18 +1106,22 @@
             );
 
       const phaseTotalMs = overviewMs + zoomInMs + focusCycleMs;
-      const cycleCompleted = focusElapsedForCompletionMs >= focusCycleMs;
+      const cycleCompleted = focusElapsedForCompletionWithZoomMs >= focusCycleMs;
       const preFocusElapsedMs = Math.min(elapsed, overviewMs + zoomInMs);
       const phaseProgressElapsedMs =
         preFocusElapsedMs +
-        (elapsed > overviewMs + zoomInMs ? focusElapsedForCompletionMs : 0);
+        (elapsed > overviewMs + zoomInMs
+          ? focusElapsedForCompletionWithZoomMs
+          : 0);
       const holdAwareBrokenCompletion =
         phase.mode === "broken" && syncFocusToEditorial && focusNarrativeMs > 0;
       const brokenCompletionOverrunMs = holdAwareBrokenCompletion
         ? Math.max(90_000, Math.round(focusNarrativeMs * 0.8))
         : 0;
       const phaseHardStopMs = phaseTotalMs + brokenCompletionOverrunMs;
-      const reachedPhaseEnd = cycleCompleted || elapsed >= phaseHardStopMs;
+      const elapsedForHardStopMs = Math.max(0, elapsed + zoomToCompletionOffsetMs);
+      const reachedPhaseEnd =
+        cycleCompleted || elapsedForHardStopMs >= phaseHardStopMs;
       stageProgressRatio = Math.max(
         0,
         Math.min(
@@ -2198,16 +1234,7 @@
           focusBlend = 0;
         } else {
           const localProgress = autoplayProgress - Math.floor(autoplayProgress);
-          const holdRatio = 0.54;
-          const holdHalf = holdRatio / 2;
-          if (localProgress <= holdHalf) {
-            focusBlend = 0;
-          } else if (localProgress >= 1 - holdHalf) {
-            focusBlend = 1;
-          } else {
-            const moveT = (localProgress - holdHalf) / (1 - holdRatio);
-            focusBlend = moveT;
-          }
+          focusBlend = localProgress;
         }
         focusIndex = focusBaseIndex;
       } else if (viewState !== "broken-seq") {
@@ -2432,7 +1459,7 @@
         camera.lastMs = now;
         snapCameraToAnchor = false;
       } else {
-        setCameraTarget(target, now);
+        setCameraTargetForSketch(target, now);
         const cameraFollowMs =
           forcedFocusRecordId && viewState === "focus"
             ? Math.max(2200, effectiveFocusAdvanceMs * 3.2)
@@ -2441,7 +1468,7 @@
                 anchorDrivenNoteMode
               ? Math.max(900, Math.min(2200, effectiveFocusAdvanceMs * 0.28))
             : effectiveFocusAdvanceMs;
-        tickCamera(now, viewState, cameraFollowMs);
+        tickCameraForSketch(now, viewState, cameraFollowMs);
       }
 
       if (isReleasingZoomTo && noteZoomKey) {
@@ -2737,7 +1764,10 @@
           : viewState === "zoom-in"
             ? 0
             : focusElapsedMs / 1000;
-      const timeline = editorialTimelineFor(phase.id, noteViewState);
+      const timeline = editorialRuntime.editorialTimelineFor(
+        phase.id,
+        noteViewState,
+      );
       const baseElapsedSec =
         timeline.elapsedMode === "view" ? viewElapsedSec : elapsed / 1000;
 
@@ -2777,7 +1807,10 @@
             targetStartSec - baseElapsedSec,
           );
         } else {
-          const descriptors = chapterSkimDescriptors(phase.id, phase.mode);
+          const descriptors = editorialRuntime.chapterSkimDescriptors(
+            phase.id,
+            phase.mode,
+          );
           const descriptorIndex = descriptors.findIndex(
             (item) => item.viewState === noteViewState,
           );
@@ -2789,7 +1822,7 @@
               ];
 
             resetPhaseProgress(now);
-            const targetOverviewMs = phaseSectionDurationMs(
+            const targetOverviewMs = editorialRuntime.phaseSectionDurationMs(
               phase.id,
               "grid",
               phase.overviewMs || 0,
@@ -2804,7 +1837,7 @@
             lastFrameMs = now;
 
             noteStateForResolve = targetDescriptor.viewState;
-            timelineForResolve = editorialTimelineFor(
+            timelineForResolve = editorialRuntime.editorialTimelineFor(
               phase.id,
               noteStateForResolve,
             );
@@ -2873,7 +1906,7 @@
         timelineForResolve.elapsedMode === "view"
           ? effectiveElapsedSec
           : viewElapsedForResolve;
-      const activeNote = resolveActiveNote(
+      const activeNote = editorialRuntime.resolveActiveNote(
         phase.id,
         phaseElapsedForNote,
         noteStateForResolve,
@@ -2905,10 +1938,18 @@
           lastResolvedNoteId = activeNoteId;
         }
       }
-      const chapterMeta = chapterMetaForPhase(phase.id);
+      const chapterMeta = chapterMetaForPhase(
+        {
+          windows: chapterTitleWindows,
+          screens: chapterTitleScreens,
+          opinions: chapterTitleOpinions,
+          broken: chapterTitleBroken,
+        },
+        phase.id,
+      );
       activeChapterStep = chapterMeta.step;
       activeChapterTitle = chapterMeta.title;
-      activeChapterDescription = legendDescriptionForPhase();
+      activeChapterDescription = legendDescriptionForPhase(SHARED_CHAPTER_LEGEND_TEXT);
       activeEditorialText = stripInlineImageIds(rawEditorialText);
 
       phaseLabelForUi = `${phase.label} - ${noteStateForResolve}`;

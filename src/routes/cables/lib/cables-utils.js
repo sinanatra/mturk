@@ -154,32 +154,6 @@ export function sortRecords(list) {
   });
 }
 
-export function buildGridLayout(list, cardW, cardH, gap = 0) {
-  if (list.length === 0) return emptyLayout();
-
-  const cols = Math.max(1, Math.ceil(Math.sqrt((list.length * cardW) / cardH)));
-  const rowsCount = Math.ceil(list.length / cols);
-  const worldWidth = cols * (cardW + gap) - gap;
-  const worldHeight = rowsCount * (cardH + gap) - gap;
-
-  const xStart = -worldWidth / 2 + cardW / 2;
-  const yStart = -worldHeight / 2 + cardH / 2;
-
-  const map = new Map();
-  list.forEach((item, index) => {
-    const row = Math.floor(index / cols);
-    const col = index % cols;
-    map.set(item.id, {
-      x: xStart + col * (cardW + gap),
-      y: yStart + row * (cardH + gap),
-      w: cardW,
-      h: cardH,
-    });
-  });
-
-  return { map, worldWidth, worldHeight, maxW: cardW, maxH: cardH };
-}
-
 export function buildMasonryLayout(list, getAspect, columns, baseWidth, gap = 0) {
   if (list.length === 0) return emptyLayout();
 
@@ -247,6 +221,26 @@ export function mapById(list) {
   const out = new Map();
   for (const item of list) out.set(item.id, item);
   return out;
+}
+
+export function imageAspectFromMeta(imageMeta, url, fallback = 1.4) {
+  const meta = imageMeta.get(url);
+  if (!meta || !meta.w || !meta.h) return fallback;
+  const aspect = meta.w / meta.h;
+  return aspect > 0 ? aspect : fallback;
+}
+
+export function isTypingElementFocused(isBrowser = true) {
+  if (!isBrowser) return false;
+  const el = document.activeElement;
+  if (!el) return false;
+  const tag = el.tagName;
+  return (
+    tag === "INPUT" ||
+    tag === "TEXTAREA" ||
+    tag === "SELECT" ||
+    el.isContentEditable
+  );
 }
 
 export function buildColumnSnakeTraversal(list, layout) {
@@ -364,6 +358,43 @@ export function normalizeNote(raw, index) {
   };
 }
 
+export function selectActiveTimeNotes(editorialNotes, phase) {
+  return editorialNotes
+    .filter(
+      (note) => note.active && note.mode !== "target" && note.phase === phase,
+    )
+    .sort((a, b) => a.order - b.order);
+}
+
+export function phaseDurationMsFromNotes(notes, fallbackMs) {
+  if (!notes.length) return fallbackMs;
+  const totalSec = notes.reduce(
+    (sum, note) => sum + Math.max(0.5, Number(note.durationSec) || 0.5),
+    0,
+  );
+  return Math.max(1000, Math.round(totalSec * 1000));
+}
+
+export function collectEditorialVisualImageUrls(notes) {
+  const urls = new Set();
+  for (const note of notes) {
+    const images = note?.visual?.images;
+    if (Array.isArray(images)) {
+      for (const url of images) {
+        if (url) urls.add(url);
+      }
+    }
+
+    const collage = note?.visual?.collage;
+    if (Array.isArray(collage)) {
+      for (const item of collage) {
+        if (item?.src) urls.add(item.src);
+      }
+    }
+  }
+  return [...urls];
+}
+
 export function sequenceNoteByDuration(notes, elapsedSec, options = {}) {
   if (!notes.length) return null;
   const {
@@ -394,6 +425,106 @@ export function sequenceNoteByDuration(notes, elapsedSec, options = {}) {
     remaining -= duration;
   }
   return notes[notes.length - 1];
+}
+
+export function extractInlineImageIds(value) {
+  const raw = String(value || "");
+  if (!raw) return [];
+  const matches = raw.match(/\b[A-Za-z0-9_-]{20,}\b/g) || [];
+  return [...new Set(matches)];
+}
+
+export function extractInlineRecordIds(value) {
+  const raw = String(value || "");
+  if (!raw) return [];
+  const matches = [...raw.matchAll(/\[\[id:([A-Za-z0-9_-]{3,})\]\]/g)];
+  return [...new Set(matches.map((match) => match[1]).filter(Boolean))];
+}
+
+export function stripInlineImageIds(value) {
+  const raw = normalizeMultilineText(value);
+  if (!raw) return "";
+  const lines = raw
+    .split("\n")
+    .map((line) =>
+      line
+        .replace(/\[\[id:[A-Za-z0-9_-]{3,}\]\]/g, "")
+        .replace(/\b[A-Za-z0-9_-]{20,}\b/g, "")
+        .replace(/[ \t]{2,}/g, " ")
+        .trim(),
+    )
+    .filter((line) => line.length > 0);
+  return lines.join("\n");
+}
+
+function imageIdFromUrl(url) {
+  const raw = String(url || "");
+  if (!raw) return "";
+  const match = raw.match(/\/([A-Za-z0-9_-]{20,})\.[A-Za-z0-9]+(?:$|\?)/);
+  return match?.[1] || "";
+}
+
+function recordMatchesImageId(record, imageId) {
+  if (!record || !imageId) return false;
+  if (record.imageUrl && imageIdFromUrl(record.imageUrl) === imageId)
+    return true;
+  if (
+    record.image?.imageUrl &&
+    imageIdFromUrl(record.image.imageUrl) === imageId
+  )
+    return true;
+  if (
+    record.drawing?.imageUrl &&
+    imageIdFromUrl(record.drawing.imageUrl) === imageId
+  )
+    return true;
+  return false;
+}
+
+export function resolveNoteAnchorRecordId(note, orderedRecords) {
+  if (!note || !orderedRecords.length) return "";
+
+  const explicitRecordId = normalizeText(note.anchorId || "");
+  if (explicitRecordId) {
+    const direct = orderedRecords.find((item) => item.id === explicitRecordId);
+    if (direct?.id) return direct.id;
+    const viaAlias = orderedRecords.find(
+      (item) =>
+        Array.isArray(item.aliasIds) && item.aliasIds.includes(explicitRecordId),
+    );
+    if (viaAlias?.id) return viaAlias.id;
+  }
+
+  const explicitImageId = normalizeText(note.anchorImageId || "");
+  if (explicitImageId) {
+    const record = orderedRecords.find((item) =>
+      recordMatchesImageId(item, explicitImageId),
+    );
+    if (record?.id) return record.id;
+  }
+
+  const noteText = note.text || "";
+  const recordIds = extractInlineRecordIds(noteText);
+  if (recordIds.length && orderedRecords.length) {
+    const recordIdSet = new Set(orderedRecords.map((item) => item.id));
+    for (const recordId of recordIds) {
+      if (recordIdSet.has(recordId)) return recordId;
+      const viaAlias = orderedRecords.find(
+        (item) => Array.isArray(item.aliasIds) && item.aliasIds.includes(recordId),
+      );
+      if (viaAlias?.id) return viaAlias.id;
+    }
+  }
+
+  const imageIds = extractInlineImageIds(noteText);
+  if (!imageIds.length || !orderedRecords.length) return "";
+  for (const imageId of imageIds) {
+    const record = orderedRecords.find((item) =>
+      recordMatchesImageId(item, imageId),
+    );
+    if (record?.id) return record.id;
+  }
+  return "";
 }
 
 export function excerpt(text, limit = 360) {
