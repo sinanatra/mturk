@@ -3,7 +3,7 @@
     <h2>
         These experiments delve into the lives of Amazon Mechanical Turk
         workers. Following the logic of the platform, workers have been employed
-        for a small fee and asked to give a glimpse of their private lifes.
+        for a small fee and asked to give a glimpse of their private lives.
         Unlike the typical use of the platform, the submitted data prompt
         reflection on hidden labor, material quality, and ways of rebelling
         against a system on the verge of ethics.
