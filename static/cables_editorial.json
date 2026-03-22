@@ -125,19 +125,19 @@
       "mode": "time",
       "active": true,
       "durationSec": 10,
-      "text": "With this round, I collected 203 pictures. The initial goal had been 100."
+      "text": "I collected 203 pictures in a few hours. \nThe initial goal had been 100."
     },
     {
-      "id": "note-windows-focus-1",
-      "phase": "windows-focus",
+      "id": "note-windows-grid-11",
+      "phase": "windows-grid",
       "mode": "time",
       "active": true,
       "durationSec": 7,
       "text": "Before posting the request, I watched YouTube tutorials and read Reddit threads where workers exchange strategies."
     },
     {
-      "id": "note-windows-focus-2",
-      "phase": "windows-focus",
+      "id": "note-windows-grid-12",
+      "phase": "windows-grid",
       "mode": "time",
       "active": true,
       "durationSec": 7,
@@ -287,14 +287,7 @@
       "durationSec": 6,
       "text": "The material does not disappear when payment is refused. The archive expands regardless."
     },
-    {
-      "id": "note-windows-focus-18-pause-beat",
-      "phase": "windows-focus",
-      "mode": "time",
-      "active": true,
-      "durationSec": 5,
-      "text": ""
-    },
+
     {
       "id": "note-windows-focus-19",
       "phase": "windows-focus",
@@ -308,17 +301,38 @@
       "phase": "screens-grid",
       "mode": "time",
       "active": true,
-      "durationSec": 7,
-      "text": "More than one year later, I returned to the platform and asked for photographs of working setups."
+      "durationSec": 12,
+      "text": "More than one year later, I returned to the platform and asked for photographs of working setups.",
+      "visual": {
+        "mode": "blackout",
+        "hideGrid": true
+      }
     },
     {
       "id": "note-screens-grid-2",
       "phase": "screens-grid",
       "mode": "time",
       "active": true,
-      "durationSec": 5,
-      "text": "I uploaded my own desk as a reference image."
+      "durationSec": 10,
+      "text": "I uploaded my own desk as a reference image.",
+      "visual": {
+        "mode": "image",
+        "hideGrid": true,
+        "fadeInMs": 4000,
+        "widthRatio": 0.8,
+        "images": ["/images/1_R0afcqeLfmNfyeawBdGQ9Xclosiq5Bp.jpg"]
+      }
     },
+
+    {
+      "id": "note-screens-grid-2",
+      "phase": "screens-grid",
+      "mode": "time",
+      "active": true,
+      "durationSec": 5,
+      "text": "I asked for 100 images and received 140."
+    },
+
     {
       "id": "note-screens-focus-screens-35",
       "phase": "screens-focus",
@@ -364,15 +378,7 @@
       "text": "",
       "anchorId": "screens-100"
     },
-    {
-      "id": "note-screens-focus-screens-108-2",
-      "phase": "screens-focus",
-      "mode": "time",
-      "active": true,
-      "durationSec": 5,
-      "text": "I asked for 100 images and received 140.",
-      "anchorId": "screens-1"
-    },
+
     {
       "id": "note-screens-focus-screens-17",
       "phase": "screens-focus",
@@ -816,16 +822,65 @@
       "active": true,
       "durationSec": 6,
       "text": "Inside it, labor is fragmented, distributed, and constantly recalibrated.",
-      "anchorId": "merged-broken-112"
+      "anchorId": "merged-broken-67"
     },
     {
       "id": "note-broken-focus-merged-broken-178",
       "phase": "broken-broken-seq",
       "mode": "time",
       "active": true,
-      "durationSec": 20,
+      "durationSec": 12,
       "text": "And within that recalibration, there is not only compliance, but agency.",
       "anchorId": "merged-broken-77"
+    },
+    {
+      "id": "note-worker-1",
+      "phase": "worker-attempt",
+      "mode": "time",
+      "durationSec": 8,
+      "text": "After collecting and reviewing, I tried to create a worker account."
+    },
+    {
+      "id": "note-worker-2",
+      "phase": "worker-attempt",
+      "mode": "time",
+      "durationSec": 8,
+      "text": "I wanted to earn back what I have spent on the platform."
+    },
+    {
+      "id": "note-worker-3",
+      "phase": "worker-attempt",
+      "mode": "time",
+      "durationSec": 6,
+      "text": "Access was denied.",
+      "visual": {
+        "mode": "image",
+        "hideGrid": true,
+        "fadeInMs": 2000,
+        "widthRatio": 0.8,
+        "images": ["/suspended.png"]
+      }
+    },
+    {
+      "id": "note-worker-3",
+      "phase": "worker-attempt",
+      "mode": "time",
+      "durationSec": 10,
+      "text": "I had defined the instructions. I had set the payment.\nI had decided what counted as acceptable work. ",
+      "visual": {
+        "mode": "image",
+        "hideGrid": true,
+        "fadeInMs": 2000,
+        "widthRatio": 0.8,
+        "images": ["/denied.png"]
+      }
+    },
+    {
+      "id": "note-worker-4",
+      "phase": "worker-attempt",
+      "mode": "time", 
+      "durationSec": 8,
+      "text": "But when I tried to switch sides, the system did not recognize me as a valid candidate."
     }
   ]
 }

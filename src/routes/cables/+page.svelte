@@ -2,6 +2,7 @@
   import { tsv } from "d3";
   import { onDestroy, onMount } from "svelte";
   import { browser } from "$app/environment";
+  import { base } from "$app/paths";
   import CablesOverlay from "./components/CablesOverlay.svelte";
   import CablesControls from "./components/CablesControls.svelte";
   import {
@@ -32,10 +33,13 @@
     getRecordingOverlayMetrics,
   } from "./lib/cables-recording-utils";
   import {
-    buildEditorialRuntime,
+    chapterSkimDescriptors,
     chapterMetaForPhase,
+    editorialTimelineFor,
     legendDescriptionForPhase,
     parseEditorialPayload,
+    phaseSectionDurationMs,
+    resolveActiveNote,
   } from "./lib/cables-story-utils";
   import {
     createSketchRenderers,
@@ -89,17 +93,21 @@
   let stageProgressPath = "M 0 0";
 
   let editorialNotes = [];
-  let editorialRuntime = buildEditorialRuntime([]);
   let editorialVisualImageUrls = [];
   let chapterTitleWindows = "";
   let chapterTitleScreens = "";
   let chapterTitleOpinions = "";
   let chapterTitleBroken = "";
+  let chapterTitleWorkerAttempt = "";
 
   const RECORD_SIZE_PX = 1920; //3840;
   const RECORD_FPS = 30;
   const RECORD_FINAL_HOLD_MS = 180;
   const RECORD_BLACKOUT_MS = 3000;
+  const RECORD_CHAPTER_END_HOLD_MS = Math.max(
+    80,
+    Math.round((1000 / RECORD_FPS) * 3),
+  );
   const GRID_FADE_MULTIPLIER = 200;
   const GRID_REVEAL_SPEED_MULTIPLIER = 3;
   const FOCUS_PADDING_RATIO = 0.5;
@@ -134,7 +142,11 @@
       recordingRaf = 0;
     }
     if (recordingStream) {
-      recordingStream.getTracks().forEach((track) => track.stop());
+      try {
+        recordingStream.getTracks().forEach((track) => track.stop());
+      } catch {
+        // Ignore teardown errors from ended/invalid tracks.
+      }
     }
     recordingStream = null;
     recordingMediaRecorder = null;
@@ -144,6 +156,28 @@
     recordingFinalizeHoldUntilMs = 0;
     recordingBlackoutUntilMs = 0;
     freezeBrokenOnDrawing = false;
+  }
+
+  function abortRecording(message = "Recording failed.", { save = false } = {}) {
+    recordingError = message;
+    saveRecordingOnStop = save;
+    isRecording4K = false;
+    recordingResetPending = false;
+    recordingFinalizing = false;
+    recordingFinalizeHoldUntilMs = 0;
+    recordingBlackoutUntilMs = 0;
+    freezeBrokenOnDrawing = false;
+
+    const recorder = recordingMediaRecorder;
+    if (recorder && recorder.state !== "inactive") {
+      try {
+        recorder.stop();
+        return;
+      } catch {
+        // Fall through to stream teardown.
+      }
+    }
+    stopRecordingStream();
   }
 
 
@@ -169,99 +203,109 @@
       }
     }
 
-    const canvasCssW = Math.max(1, p5CanvasEl.clientWidth || 1);
-    const canvasCssH = Math.max(1, p5CanvasEl.clientHeight || 1);
-    const ratioX = p5CanvasEl.width / canvasCssW;
-    const ratioY = p5CanvasEl.height / canvasCssH;
+    try {
+      const canvasCssW = Math.max(1, p5CanvasEl.clientWidth || 1);
+      const canvasCssH = Math.max(1, p5CanvasEl.clientHeight || 1);
+      const ratioX = p5CanvasEl.width / canvasCssW;
+      const ratioY = p5CanvasEl.height / canvasCssH;
 
-    const srcW = Math.max(1, Math.round(stageSizePx * ratioX));
-    const srcH = Math.max(1, Math.round(stageSizePx * ratioY));
-    const sx = Math.max(0, Math.round(stageLeftPx * ratioX));
-    const sy = Math.max(0, Math.round(stageTopPx * ratioY));
+      const srcW = Math.max(1, Math.round(stageSizePx * ratioX));
+      const srcH = Math.max(1, Math.round(stageSizePx * ratioY));
+      const sx = Math.max(0, Math.round(stageLeftPx * ratioX));
+      const sy = Math.max(0, Math.round(stageTopPx * ratioY));
 
-    recordingCtx.fillStyle = "#000";
-    recordingCtx.fillRect(0, 0, RECORD_SIZE_PX, RECORD_SIZE_PX);
-    recordingCtx.drawImage(
-      p5CanvasEl,
-      sx,
-      sy,
-      srcW,
-      srcH,
-      0,
-      0,
-      RECORD_SIZE_PX,
-      RECORD_SIZE_PX,
-    );
+      recordingCtx.fillStyle = "#000";
+      recordingCtx.fillRect(0, 0, RECORD_SIZE_PX, RECORD_SIZE_PX);
+      recordingCtx.drawImage(
+        p5CanvasEl,
+        sx,
+        sy,
+        srcW,
+        srcH,
+        0,
+        0,
+        RECORD_SIZE_PX,
+        RECORD_SIZE_PX,
+      );
 
-    const stageToRecord = RECORD_SIZE_PX / Math.max(1, stageSizePx || 1);
-    const introY = Math.max(
-      12,
-      Math.round((stageTitleYPx - stageTopPx) * stageToRecord),
-    );
-    const subtitleY = Math.max(
-      12,
-      Math.round((stageSubtitleYPx - stageTopPx) * stageToRecord),
-    );
-    const introMetrics = getRecordingOverlayMetrics({
-      browser,
-      stageSizePx,
-      recordSizePx: RECORD_SIZE_PX,
-      textSelector: ".chapterLegendDesc",
-      boxSelector: ".chapterLegend",
-      fallbackFontPx: RECORD_SIZE_PX * 0.02,
-      fallbackLineHeight: RECORD_SIZE_PX * 0.023,
-      fallbackWidthPx: RECORD_SIZE_PX * 0.78,
-    });
-    const editorialMetrics = getRecordingOverlayMetrics({
-      browser,
-      stageSizePx,
-      recordSizePx: RECORD_SIZE_PX,
-      textSelector: ".editorialText",
-      boxSelector: ".editorialTape",
-      fallbackFontPx: RECORD_SIZE_PX * 0.019,
-      fallbackLineHeight: RECORD_SIZE_PX * 0.023,
-      fallbackWidthPx: RECORD_SIZE_PX * 0.78,
-    });
+      const stageToRecord = RECORD_SIZE_PX / Math.max(1, stageSizePx || 1);
+      const introY = Math.max(
+        12,
+        Math.round((stageTitleYPx - stageTopPx) * stageToRecord),
+      );
+      const subtitleY = Math.max(
+        12,
+        Math.round((stageSubtitleYPx - stageTopPx) * stageToRecord),
+      );
+      const introMetrics = getRecordingOverlayMetrics({
+        browser,
+        stageSizePx,
+        recordSizePx: RECORD_SIZE_PX,
+        textSelector: ".chapterLegendDesc",
+        boxSelector: ".chapterLegend",
+        fallbackFontPx: RECORD_SIZE_PX * 0.02,
+        fallbackLineHeight: RECORD_SIZE_PX * 0.023,
+        fallbackWidthPx: RECORD_SIZE_PX * 0.78,
+      });
+      const editorialMetrics = getRecordingOverlayMetrics({
+        browser,
+        stageSizePx,
+        recordSizePx: RECORD_SIZE_PX,
+        textSelector: ".editorialText",
+        boxSelector: ".editorialTape",
+        fallbackFontPx: RECORD_SIZE_PX * 0.019,
+        fallbackLineHeight: RECORD_SIZE_PX * 0.023,
+        fallbackWidthPx: RECORD_SIZE_PX * 0.78,
+      });
 
-    const legendHeader =
-      activeChapterStep && activeChapterTitle
-        ? `${activeChapterTitle} : ${activeChapterStep}`
-        : activeChapterTitle || activeChapterStep || "";
-    const legendText =
-      activeChapterDescription && legendHeader
-        ? `${activeChapterDescription}\n${legendHeader}`
-        : activeChapterDescription || legendHeader;
+      const legendHeader =
+        activeChapterStep && activeChapterTitle
+          ? `${activeChapterTitle} : ${activeChapterStep}`
+          : activeChapterTitle || activeChapterStep || "";
+      const legendText =
+        activeChapterDescription && legendHeader
+          ? `${activeChapterDescription}\n${legendHeader}`
+          : activeChapterDescription || legendHeader;
 
-    drawRecordingOverlayText(recordingCtx, legendText, {
-      centerX: RECORD_SIZE_PX / 2,
-      anchorY: introY,
-      width: introMetrics.widthPx,
-      fontPx: introMetrics.fontPx,
-      lineHeight: introMetrics.lineHeight,
-      anchor: "top",
-      textColor: "#FFFFFF",
-      secondaryTextColor: "rgba(255,255,255,0.68)",
-      secondaryTextColorFromLine: 1,
-    });
-    drawRecordingOverlayText(recordingCtx, activeEditorialText, {
-      centerX: RECORD_SIZE_PX / 2,
-      anchorY: subtitleY,
-      width: editorialMetrics.widthPx,
-      fontPx: editorialMetrics.fontPx,
-      lineHeight: editorialMetrics.lineHeight,
-      anchor: "bottom",
-    });
+      drawRecordingOverlayText(recordingCtx, legendText, {
+        centerX: RECORD_SIZE_PX / 2,
+        anchorY: introY,
+        width: introMetrics.widthPx,
+        fontPx: introMetrics.fontPx,
+        lineHeight: introMetrics.lineHeight,
+        anchor: "top",
+        textColor: "#FFFFFF",
+        secondaryTextColor: "rgba(255,255,255,0.68)",
+        secondaryTextColorFromLine: 1,
+      });
+      drawRecordingOverlayText(recordingCtx, activeEditorialText, {
+        centerX: RECORD_SIZE_PX / 2,
+        anchorY: subtitleY,
+        width: editorialMetrics.widthPx,
+        fontPx: editorialMetrics.fontPx,
+        lineHeight: editorialMetrics.lineHeight,
+        anchor: "bottom",
+      });
 
-    recordingCtx.strokeStyle = "rgba(255,255,255,0.1)";
-    recordingCtx.lineWidth = 1;
-    recordingCtx.strokeRect(0.5, 0.5, RECORD_SIZE_PX - 1, RECORD_SIZE_PX - 1);
-    drawRecordingStageProgress(recordingCtx, stageProgressRatio, RECORD_SIZE_PX);
+      recordingCtx.strokeStyle = "rgba(255,255,255,0.1)";
+      recordingCtx.lineWidth = 1;
+      recordingCtx.strokeRect(0.5, 0.5, RECORD_SIZE_PX - 1, RECORD_SIZE_PX - 1);
+      drawRecordingStageProgress(recordingCtx, stageProgressRatio, RECORD_SIZE_PX);
+    } catch {
+      abortRecording("Recording crashed in this browser.", { save: false });
+      return;
+    }
 
     recordingRaf = requestAnimationFrame(drawRecordingFrame);
   }
 
   function stop4KRecording({ save = true } = {}) {
-    if (!recordingMediaRecorder) return;
+    if (!recordingMediaRecorder) {
+      isRecording4K = false;
+      recordingResetPending = false;
+      stopRecordingStream();
+      return;
+    }
     saveRecordingOnStop = save;
     isRecording4K = false;
     recordingResetPending = false;
@@ -269,9 +313,13 @@
     recordingFinalizeHoldUntilMs = 0;
     recordingBlackoutUntilMs = 0;
     freezeBrokenOnDrawing = false;
-    if (recordingMediaRecorder.state !== "inactive") {
-      recordingMediaRecorder.stop();
-    } else {
+    try {
+      if (recordingMediaRecorder.state !== "inactive") {
+        recordingMediaRecorder.stop();
+      } else {
+        stopRecordingStream();
+      }
+    } catch {
       stopRecordingStream();
     }
   }
@@ -285,6 +333,15 @@
     }
     if (typeof MediaRecorder === "undefined") {
       recordingError = "MediaRecorder is not available in this browser.";
+      return;
+    }
+    const ua = navigator?.userAgent || "";
+    const isSafari =
+      /safari/i.test(ua) &&
+      !/chrome|chromium|android|crios|fxios|edg/i.test(ua);
+    if (isSafari) {
+      recordingError =
+        "Recording is unstable in Safari. Please use Chrome/Edge.";
       return;
     }
     if (isRecording4K) return;
@@ -302,7 +359,21 @@
       return;
     }
 
-    const stream = recordingCanvas.captureStream(RECORD_FPS);
+    let stream = null;
+    let streamTrack = null;
+    try {
+      stream = recordingCanvas.captureStream(RECORD_FPS);
+      streamTrack = stream?.getVideoTracks?.()[0] || null;
+    } catch {
+      recordingError = "Recording stream is not supported in this browser.";
+      stopRecordingStream();
+      return;
+    }
+    if (!stream || !streamTrack) {
+      recordingError = "Recording stream is not available.";
+      stopRecordingStream();
+      return;
+    }
     const mimeTypeCandidates = [
       "video/webm;codecs=vp9",
       "video/webm;codecs=vp8",
@@ -318,7 +389,7 @@
       recordingChunks = [];
       recordingMediaRecorder = new MediaRecorder(
         stream,
-        mimeType ? { mimeType, videoBitsPerSecond: 50_000_000 } : undefined,
+        mimeType ? { mimeType, videoBitsPerSecond: 12_000_000 } : undefined,
       );
     } catch (error) {
       recordingError = "Could not start the 4K recorder.";
@@ -330,22 +401,27 @@
       if (event.data && event.data.size > 0) recordingChunks.push(event.data);
     };
     recordingMediaRecorder.onstop = () => {
-      if (saveRecordingOnStop && recordingChunks.length) {
-        const blob = new Blob(recordingChunks, {
-          type: recordingMediaRecorder?.mimeType || "video/webm",
-        });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement("a");
-        link.href = url;
-        link.download = `cables-4k-${new Date().toISOString().replace(/[:.]/g, "-")}.webm`;
-        document.body.appendChild(link);
-        link.click();
-        link.remove();
-        URL.revokeObjectURL(url);
+      try {
+        if (saveRecordingOnStop && recordingChunks.length) {
+          const blob = new Blob(recordingChunks, {
+            type: recordingMediaRecorder?.mimeType || "video/webm",
+          });
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement("a");
+          link.href = url;
+          link.download = `cables-4k-${new Date().toISOString().replace(/[:.]/g, "-")}.webm`;
+          document.body.appendChild(link);
+          link.click();
+          link.remove();
+          URL.revokeObjectURL(url);
+        }
+      } catch {
+        recordingError = "Recording stopped, but export failed.";
+      } finally {
+        recordingChunks = [];
+        stopRecordingStream();
+        isRecording4K = false;
       }
-      recordingChunks = [];
-      stopRecordingStream();
-      isRecording4K = false;
     };
     recordingMediaRecorder.onerror = () => {
       recordingError = "Recording failed.";
@@ -365,7 +441,11 @@
         return;
       }
       drawRecordingFrame();
-      recordingMediaRecorder.start();
+      try {
+        recordingMediaRecorder.start(1000);
+      } catch {
+        abortRecording("Could not start the recorder stream.", { save: false });
+      }
     };
     beginCaptureAfterReset();
   }
@@ -394,7 +474,6 @@
   }
 
   $: records = rows.map(normalizeRecord);
-  $: editorialRuntime = buildEditorialRuntime(editorialNotes);
   $: windowsItems = sortRecords(
     records.filter((row) => row.mode === "windows" && row.imageUrl),
   );
@@ -543,6 +622,7 @@
       chapterTitleScreens = parsed.chapterTitles.screens;
       chapterTitleOpinions = parsed.chapterTitles.opinions;
       chapterTitleBroken = parsed.chapterTitles.broken;
+      chapterTitleWorkerAttempt = parsed.chapterTitles["worker-attempt"] || "";
     })();
   });
 
@@ -618,8 +698,7 @@
     let font;
     let phasePreloadCursor = 0;
     let editorialPreloadCursor = 0;
-    const PRELOAD_BATCH_SIZE = 24;
-    let activeFrameRate = 30;
+    const PRELOAD_BATCH_SIZE = 28;
     const visualState = {
       lastVisualNoteId: "",
       lastVisualSignature: "",
@@ -667,6 +746,15 @@
     }
 
     function phaseCollection(phase) {
+      if (phase.mode === "conclusion") {
+        return {
+          ordered: [],
+          byId: new Map(),
+          layout: emptyLayout(),
+          traversal: [],
+          type: "conclusion",
+        };
+      }
       if (phase.mode === "windows") {
         return {
           ordered: windowsItems,
@@ -706,7 +794,6 @@
     function preloadPhaseBatch(type, ordered) {
       if (!ordered.length) return;
       const batchCount = Math.min(PRELOAD_BATCH_SIZE, ordered.length);
-
       if (type === "image") {
         for (let i = 0; i < batchCount; i += 1) {
           const idx = (phasePreloadCursor + i) % ordered.length;
@@ -721,16 +808,12 @@
           if (chain?.drawing?.imageUrl) ensureImage(s, chain.drawing.imageUrl);
         }
       }
-
       phasePreloadCursor = (phasePreloadCursor + batchCount) % ordered.length;
     }
 
     function preloadEditorialBatch() {
       if (!editorialVisualImageUrls.length) return;
-      const batchCount = Math.min(
-        PRELOAD_BATCH_SIZE,
-        editorialVisualImageUrls.length,
-      );
+      const batchCount = Math.min(PRELOAD_BATCH_SIZE, editorialVisualImageUrls.length);
       for (let i = 0; i < batchCount; i += 1) {
         const idx = (editorialPreloadCursor + i) % editorialVisualImageUrls.length;
         const imageUrl = editorialVisualImageUrls[idx];
@@ -762,16 +845,24 @@
     };
 
     s.preload = () => {
-      font = s.loadFont("terminal-grotesque.woff");
+      font = s.loadFont(
+        `${base}/terminal-grotesque.woff`,
+        () => {},
+        () => {
+          font = null;
+          console.warn("[cables] font load failed, using fallback font");
+        },
+      );
     };
 
     s.setup = () => {
       const renderer = s.createCanvas(1, 1);
       p5CanvasEl = renderer?.elt || null;
+      // s.pixelDensity(1);
       s.colorMode(s.HSL, 360, 100, 100, 1);
       s.rectMode(s.CENTER);
       s.imageMode(s.CORNER);
-      s.textFont(font);
+      if (font) s.textFont(font);
       s.frameRate(30);
 
       s.keyPressed = () => {
@@ -865,13 +956,6 @@
     };
 
     s.draw = () => {
-      const targetFrameRate =
-        paused && !isRecording4K && skimZoomRunMs <= 0 ? 12 : 30;
-      if (targetFrameRate !== activeFrameRate) {
-        s.frameRate(targetFrameRate);
-        activeFrameRate = targetFrameRate;
-      }
-
       if (width && height && (s.width !== width || s.height !== height)) {
         s.resizeCanvas(width, height);
       }
@@ -914,12 +998,13 @@
 
       const phase = activePhase();
       const { ordered, byId, layout, traversal, type } = phaseCollection(phase);
-      if (!ordered.length || !traversal.length) {
+      const isConclusionPhase = phase.mode === "conclusion";
+      if (!isConclusionPhase && (!ordered.length || !traversal.length)) {
         stageProgressRatio = 0;
         lastFrameMs = now;
         return;
       }
-      preloadPhaseBatch(type, ordered);
+      if (!isConclusionPhase) preloadPhaseBatch(type, ordered);
       preloadEditorialBatch();
 
       if (lastFrameMs === 0) lastFrameMs = now;
@@ -939,7 +1024,117 @@
         skimZoomRunMs = Math.max(0, skimZoomRunMs - frameDeltaMs);
       }
       const elapsed = phaseElapsedMs;
-      const overviewMs = editorialRuntime.phaseSectionDurationMs(
+
+      if (isConclusionPhase) {
+        const timeline = editorialTimelineFor(editorialNotes, phase.id, "grid");
+        const timelineTotalSec = timeline.notes.length
+          ? timeline.notes.reduce((sum, note) => sum + noteDurSec(note), 0)
+          : 1;
+
+        if (
+          noteSkimSeen !== noteSkimToken &&
+          timeline.notes.length &&
+          timeline.key
+        ) {
+          const direction = noteSkimDirection >= 0 ? 1 : -1;
+          const currentOffset = noteSkimOffsetByTimeline.get(timeline.key) || 0;
+          const effectiveElapsed = Math.max(0, elapsed / 1000 + currentOffset);
+          const current = noteIndexAtElapsed(timeline.notes, effectiveElapsed, {
+            loop: false,
+            restartPauseSec: 0,
+          });
+          const targetIndex = Math.max(
+            0,
+            Math.min(
+              timeline.notes.length - 1,
+              (current.index >= 0 ? current.index : 0) + direction,
+            ),
+          );
+          const targetStartSec = noteStartSec(timeline.notes, targetIndex);
+          noteSkimOffsetByTimeline.set(
+            timeline.key,
+            targetStartSec - elapsed / 1000,
+          );
+        }
+        noteSkimSeen = noteSkimToken;
+
+        const elapsedOffsetSec = timeline.key
+          ? noteSkimOffsetByTimeline.get(timeline.key) || 0
+          : 0;
+        const effectiveElapsedSec = Math.max(0, elapsed / 1000 + elapsedOffsetSec);
+        const timelineInfo = noteIndexAtElapsed(timeline.notes, effectiveElapsedSec, {
+          loop: false,
+          restartPauseSec: 0,
+        });
+        const activeConclusionNote =
+          timelineInfo.index >= 0 ? timeline.notes[timelineInfo.index] : null;
+        const activeConclusionNoteDurSec = activeConclusionNote
+          ? noteDurSec(activeConclusionNote)
+          : 0;
+        const elapsedInConclusionNoteSec =
+          timelineInfo.index >= 0
+            ? Math.max(
+                0,
+                effectiveElapsedSec - noteStartSec(timeline.notes, timelineInfo.index),
+              )
+            : 0;
+
+        s.push();
+        s.rectMode(s.CORNER);
+        s.noStroke();
+        s.fill(0, 0, 0, 1);
+        s.rect(stageX, stageY, stageSize, stageSize);
+        drawNoteVisual(
+          activeConclusionNote,
+          elapsedInConclusionNoteSec,
+          activeConclusionNoteDurSec,
+          stageX,
+          stageY,
+          stageSize,
+        );
+        s.pop();
+
+        stageProgressRatio = Math.max(
+          0,
+          Math.min(1, (effectiveElapsedSec * 1000) / Math.max(1, timelineTotalSec * 1000)),
+        );
+        const conclusionTotalMs = Math.max(1, Math.round(timelineTotalSec * 1000));
+        const reachedConclusionEnd = effectiveElapsedSec * 1000 >= conclusionTotalMs;
+
+        if (!paused && reachedConclusionEnd) {
+          paused = true;
+          if (isRecording4K) {
+            if (!recordingFinalizing) {
+              const t = performance.now();
+              recordingFinalizing = true;
+              recordingFinalizeHoldUntilMs = t + RECORD_FINAL_HOLD_MS;
+              recordingBlackoutUntilMs = recordingFinalizeHoldUntilMs + RECORD_BLACKOUT_MS;
+            }
+          } else {
+            resetPhaseProgress(now);
+            return;
+          }
+        }
+
+        const chapterMeta = chapterMetaForPhase(
+          {
+            windows: chapterTitleWindows,
+            screens: chapterTitleScreens,
+            opinions: chapterTitleOpinions,
+            broken: chapterTitleBroken,
+            "worker-attempt": chapterTitleWorkerAttempt,
+          },
+          phase.id,
+        );
+        activeChapterStep = chapterMeta.step;
+        activeChapterTitle = chapterMeta.title;
+        activeChapterDescription = "";
+        activeEditorialText = stripInlineImageIds(activeConclusionNote?.text || "");
+        phaseLabelForUi = `${phase.label} - slides`;
+        return;
+      }
+
+      const overviewMs = phaseSectionDurationMs(editorialNotes, 
         phase.id,
         "grid",
         phase.overviewMs || 0,
@@ -962,7 +1157,7 @@
             ? { x: camera.x, y: camera.y, scale: camera.scale }
             : { x: 0, y: 0, scale: 1 };
           const focusState = phase.mode === "broken" ? "broken-seq" : "focus";
-          const focusTimeline = editorialRuntime.editorialTimelineFor(
+          const focusTimeline = editorialTimelineFor(editorialNotes, 
             phase.id,
             focusState,
           );
@@ -1002,7 +1197,7 @@
           : viewState === "zoom-in"
             ? 0
             : focusElapsedMs / 1000;
-      const preTimeline = editorialRuntime.editorialTimelineFor(
+      const preTimeline = editorialTimelineFor(editorialNotes, 
         phase.id,
         preNoteViewState,
       );
@@ -1012,12 +1207,7 @@
         noteSkimOffsetByTimeline.get(preTimeline.key) || 0;
       const preEffectiveElapsedSec = Math.max(
         0,
-        preBaseElapsedSec +
-          preElapsedOffset +
-          zoomToHoldOffsetSec +
-          (phase.mode === "broken" && preNoteViewState === "broken-seq"
-            ? brokenFocusHoldOffsetSec
-            : 0),
+        preBaseElapsedSec + preElapsedOffset,
       );
       let preTimelineNote = null;
       let preTimelineInfo = { index: -1, inPause: false };
@@ -1060,7 +1250,7 @@
       const baseFocusAdvanceMs = Math.max(1, phase.focusAdvanceMs || 1);
       const focusNarrativeState =
         phase.mode === "broken" ? "broken-seq" : "focus";
-      const focusNarrativeMs = editorialRuntime.phaseSectionDurationMs(
+      const focusNarrativeMs = phaseSectionDurationMs(editorialNotes, 
         phase.id,
         focusNarrativeState,
         0,
@@ -1083,16 +1273,12 @@
         syncFocusToEditorial && focusNarrativeMs > 0
           ? Math.max(1, focusNarrativeMs)
           : Math.max(1, traversal.length * effectiveFocusAdvanceMs);
-      const brokenFocusHoldMs =
-        phase.mode === "broken" ? brokenFocusHoldOffsetSec * 1000 : 0;
+      const brokenFocusHoldMs = 0;
       const focusElapsedForCompletionMs =
         phase.mode === "broken" && syncFocusToEditorial && focusNarrativeMs > 0
           ? Math.max(0, focusElapsedMs + brokenFocusHoldMs)
           : focusElapsedMs;
-      const zoomToCompletionOffsetMs = Math.min(
-        0,
-        Math.round(zoomToHoldOffsetSec * 1000),
-      );
+      const zoomToCompletionOffsetMs = 0;
       const focusElapsedForCompletionWithZoomMs = Math.max(
         0,
         focusElapsedForCompletionMs + zoomToCompletionOffsetMs,
@@ -1113,20 +1299,13 @@
         (elapsed > overviewMs + zoomInMs
           ? focusElapsedForCompletionWithZoomMs
           : 0);
-      const holdAwareBrokenCompletion =
-        phase.mode === "broken" && syncFocusToEditorial && focusNarrativeMs > 0;
-      const brokenCompletionOverrunMs = holdAwareBrokenCompletion
-        ? Math.max(90_000, Math.round(focusNarrativeMs * 0.8))
-        : 0;
-      const phaseHardStopMs = phaseTotalMs + brokenCompletionOverrunMs;
-      const elapsedForHardStopMs = Math.max(0, elapsed + zoomToCompletionOffsetMs);
-      const reachedPhaseEnd =
-        cycleCompleted || elapsedForHardStopMs >= phaseHardStopMs;
+      const phaseProgressMs = Math.max(0, Math.min(phaseTotalMs, phaseProgressElapsedMs));
+      const reachedPhaseEnd = phaseProgressElapsedMs >= phaseTotalMs;
       stageProgressRatio = Math.max(
         0,
         Math.min(
           1,
-          phaseProgressElapsedMs / Math.max(1, phaseTotalMs),
+          phaseProgressMs / Math.max(1, phaseTotalMs),
         ),
       );
 
@@ -1154,12 +1333,13 @@
               brokenLastCompletedId = holdId;
             }
           }
+          // Give recorder a few frames on the final chapter frame so it does
+          // not cut early, while still ending without blackout.
           if (!recordingFinalizing) {
             const t = performance.now();
             recordingFinalizing = true;
-            recordingFinalizeHoldUntilMs = t + RECORD_FINAL_HOLD_MS;
-            recordingBlackoutUntilMs =
-              recordingFinalizeHoldUntilMs + RECORD_BLACKOUT_MS;
+            recordingFinalizeHoldUntilMs = t + RECORD_CHAPTER_END_HOLD_MS;
+            recordingBlackoutUntilMs = recordingFinalizeHoldUntilMs;
           }
         } else {
           resetPhaseProgress(now);
@@ -1334,10 +1514,12 @@
         viewState === "focus" && !paused
           ? focusEntry.w + (nextFocusEntry.w - focusEntry.w) * focusBlend
           : focusEntry.w;
-      const minFocusFactor = 1 / Math.max(0.35, 1 - FOCUS_PADDING_RATIO);
+      const focusPaddingRatio =
+        phase.mode === "broken" ? 0.08 : FOCUS_PADDING_RATIO;
+      const minFocusFactor = 1 / Math.max(0.35, 1 - focusPaddingRatio);
       const minFocusScale = fitScale * minFocusFactor;
       const baseFocusScale =
-        (stageSize * (1 - FOCUS_PADDING_RATIO)) / Math.max(blendedFocusW, 1);
+        (stageSize * (1 - focusPaddingRatio)) / Math.max(blendedFocusW, 1);
       const noteZoomTo =
         anchorDrivenNoteMode &&
         preTimelineNote?.zoomTo &&
@@ -1478,7 +1660,7 @@
         const scaleDistToBase = Math.abs(camera.scale - baseFocusScaleNoZoom);
         const returnedToBase = pxDistToBase <= 90 && scaleDistToBase <= 0.07;
         if (!returnedToBase && !paused) {
-          zoomToHoldOffsetSec -= frameDeltaMs / 1000;
+          // keep timing deterministic; no clock offsets while camera recenters
         }
         if (returnedToBase) {
           zoomToReleasingNoteId = "";
@@ -1512,9 +1694,9 @@
         const scaleDist = Math.abs(camera.scale - target.scale);
         const arrived = pxDist <= 90 && scaleDist <= 0.07;
 
-        // Freeze note-clock while camera is still traveling to anchor.
+        // keep timing deterministic; no note-clock freeze while camera travels
         if (!arrived && !paused) {
-          brokenFocusHoldOffsetSec -= frameDeltaMs / 1000;
+          // no-op
         }
 
         if (!noteText) {
@@ -1718,33 +1900,21 @@
             const focused = record.id === focusId;
             const completed = brokenCompletedIds.has(record.id);
             if (focused) {
-              drawBrokenState(record, entry, brokenFocusState, 1, false);
-              drawCardMeta(
-                brokenMetaForState(record, brokenFocusState),
-                entry,
-                1,
-              );
+              drawBrokenState(record, entry, "triptych", 1, false);
             } else if (completed) {
               const isLatestCompleted = record.id === brokenLastCompletedId;
               drawBrokenState(
                 record,
                 entry,
-                "drawing",
+                "triptych",
                 isLatestCompleted ? 0.26 : 0.2,
                 true,
               );
-              drawCardMeta(
-                brokenMetaForState(record, "drawing"),
-                entry,
-                isLatestCompleted ? 0.38 : 0.3,
-              );
             } else {
-              drawBrokenState(record, entry, "image", 0.16, true);
-              drawCardMeta(brokenMetaForState(record, "image"), entry, 0.24);
+              drawBrokenState(record, entry, "triptych", 0.16, true);
             }
           } else {
-            drawBrokenState(record, entry, "image", 1, true);
-            drawCardMeta(brokenMetaForState(record, "image"), entry, 1);
+            drawBrokenState(record, entry, "triptych", 1, true);
           }
         }
 
@@ -1764,7 +1934,7 @@
           : viewState === "zoom-in"
             ? 0
             : focusElapsedMs / 1000;
-      const timeline = editorialRuntime.editorialTimelineFor(
+      const timeline = editorialTimelineFor(editorialNotes, 
         phase.id,
         noteViewState,
       );
@@ -1807,7 +1977,7 @@
             targetStartSec - baseElapsedSec,
           );
         } else {
-          const descriptors = editorialRuntime.chapterSkimDescriptors(
+          const descriptors = chapterSkimDescriptors(editorialNotes, 
             phase.id,
             phase.mode,
           );
@@ -1822,7 +1992,7 @@
               ];
 
             resetPhaseProgress(now);
-            const targetOverviewMs = editorialRuntime.phaseSectionDurationMs(
+            const targetOverviewMs = phaseSectionDurationMs(editorialNotes, 
               phase.id,
               "grid",
               phase.overviewMs || 0,
@@ -1837,7 +2007,7 @@
             lastFrameMs = now;
 
             noteStateForResolve = targetDescriptor.viewState;
-            timelineForResolve = editorialRuntime.editorialTimelineFor(
+            timelineForResolve = editorialTimelineFor(editorialNotes, 
               phase.id,
               noteStateForResolve,
             );
@@ -1874,22 +2044,13 @@
 
       const elapsedOffset =
         noteSkimOffsetByTimeline.get(timelineForResolve.key) || 0;
-      const brokenHoldOffsetForResolve =
-        phase.mode === "broken" && noteStateForResolve === "broken-seq"
-          ? brokenFocusHoldOffsetSec
-          : 0;
       const effectiveElapsedSec = Math.max(
         0,
-        baseElapsedForResolve +
-          elapsedOffset +
-          brokenHoldOffsetForResolve +
-          zoomToHoldOffsetSec,
+        baseElapsedForResolve + elapsedOffset,
       );
       const skimAdjustedPhaseElapsedMs = Math.max(
         0,
-        phaseElapsedForResolve * 1000 +
-          elapsedOffset * 1000 +
-          zoomToHoldOffsetSec * 1000,
+        phaseElapsedForResolve * 1000 + elapsedOffset * 1000,
       );
       stageProgressRatio = Math.max(
         0,
@@ -1906,7 +2067,7 @@
         timelineForResolve.elapsedMode === "view"
           ? effectiveElapsedSec
           : viewElapsedForResolve;
-      const activeNote = editorialRuntime.resolveActiveNote(
+      const activeNote = resolveActiveNote(editorialNotes, 
         phase.id,
         phaseElapsedForNote,
         noteStateForResolve,
@@ -1944,6 +2105,7 @@
           screens: chapterTitleScreens,
           opinions: chapterTitleOpinions,
           broken: chapterTitleBroken,
+          "worker-attempt": chapterTitleWorkerAttempt,
         },
         phase.id,
       );

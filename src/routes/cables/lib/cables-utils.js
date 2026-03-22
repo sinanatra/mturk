@@ -31,6 +31,14 @@ export const TIMELINE = [
     zoomInMs: 4200,
     focusAdvanceMs: 9900,
   },
+  {
+    id: "worker-attempt",
+    label: "Outro",
+    mode: "conclusion",
+    overviewMs: 1000,
+    zoomInMs: 0,
+    focusAdvanceMs: 1000,
+  },
 ];
 
 export const VIEWS_PALETTE = {

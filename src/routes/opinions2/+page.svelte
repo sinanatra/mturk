@@ -2,6 +2,7 @@
   import { tsv } from "d3";
   import { onMount } from "svelte";
   import { browser } from "$app/environment";
+  import { base } from "$app/paths";
   let P5 = null;
   let width;
   let height;
@@ -17,7 +18,7 @@
     if (browser) {
       const mod = await import("p5-svelte");
       P5 = mod.default;
-      const d = await tsv("opinions_out.tsv");
+      const d = await tsv(`${base}/opinions_out.tsv`);
       data = d;
       comments = d
         .flatMap((x) => x.text.split(". ").map((text) => ({ text, id: x.id })))
@@ -44,7 +45,7 @@
   let font;
   const sketch = (s) => {
     s.preload = () => {
-      font = s.loadFont("terminal-grotesque.woff");
+      font = s.loadFont(`${base}/terminal-grotesque.woff`);
     };
     s.setup = () => {
       s.createCanvas(1, 1);

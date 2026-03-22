@@ -1,5 +1,5 @@
 import {
-  BROKEN_TEXT_STYLE,
+  OPINIONS_TEXT_STYLE,
   VIEWS_PALETTE,
   excerpt,
   normalizeMultilineText,
@@ -395,53 +395,79 @@ export function createSketchRenderers({ s, ensureImage, visualState }) {
     s.pop();
   };
 
-  const drawBrokenState = (chain, entry, state = "image", alpha = 1, desaturate = false) => {
-    if (state === "image" && chain.image?.imageUrl) {
-      drawImage(chain.image.imageUrl, entry, alpha, desaturate);
-      return;
+  const drawBrokenState = (chain, entry, _state = "image", alpha = 1, desaturate = false) => {
+    // Pyramid/tessellated layout:
+    // top = original image, bottom-left = text, bottom-right = drawing.
+    const padX = Math.max(2, entry.w * 0.018);
+    const padY = Math.max(2, entry.h * 0.022);
+    const innerW = Math.max(1, entry.w - padX * 2);
+    const innerH = Math.max(1, entry.h - padY * 2);
+    const gap = Math.max(2, entry.w * 0.01);
+    const topH = Math.max(1, innerH * 0.4);
+    const bottomH = Math.max(1, innerH - topH - gap);
+    const topW = innerW;
+    const textW = Math.max(1, innerW * 0.42);
+    const drawingW = Math.max(1, innerW - gap - textW);
+    const topY = entry.y - innerH / 2 + topH / 2;
+    const bottomY = entry.y + innerH / 2 - bottomH / 2;
+    const imagePanel = {
+      x: entry.x,
+      y: topY,
+      w: topW,
+      h: topH,
+    };
+    const drawingPanel = {
+      x: entry.x - innerW / 2 + textW + gap + drawingW / 2,
+      y: bottomY,
+      w: drawingW,
+      h: bottomH,
+    };
+    const textPanel = {
+      x: entry.x - innerW / 2 + textW / 2,
+      y: bottomY,
+      w: textW,
+      h: bottomH,
+    };
+
+    if (chain.image?.imageUrl) drawImage(chain.image.imageUrl, imagePanel, alpha, desaturate);
+    else {
+      s.noStroke();
+      s.fill(...VIEWS_PALETTE.missing, alpha);
+      s.rect(imagePanel.x, imagePanel.y, imagePanel.w, imagePanel.h);
     }
-    if (state === "drawing" && chain.drawing?.imageUrl) {
-      drawImage(chain.drawing.imageUrl, entry, alpha, desaturate);
-      return;
-    }
-    if (state === "text" && chain.text?.text) {
-      drawText(
-        chain.text.text,
-        entry,
-        true,
-        alpha,
-        "center",
-        BROKEN_TEXT_STYLE.sizeScale,
-        BROKEN_TEXT_STYLE.excerpt,
-        BROKEN_TEXT_STYLE.leadingRatio,
-      );
-      return;
-    }
-    if (chain.image?.imageUrl) {
-      drawImage(chain.image.imageUrl, entry, alpha, desaturate);
-      return;
-    }
-    if (chain.drawing?.imageUrl) {
-      drawImage(chain.drawing.imageUrl, entry, alpha, desaturate);
-      return;
-    }
+
     if (chain.text?.text) {
+      const textClipX = textPanel.x - textPanel.w / 2;
+      const textClipY = textPanel.y - textPanel.h / 2;
+      const textCtx = s.drawingContext;
+      textCtx.save();
+      textCtx.beginPath();
+      textCtx.rect(textClipX, textClipY, textPanel.w, textPanel.h);
+      textCtx.clip();
       drawText(
         chain.text.text,
-        entry,
+        textPanel,
         false,
         alpha,
         "center",
-        BROKEN_TEXT_STYLE.sizeScale,
-        BROKEN_TEXT_STYLE.excerpt,
-        BROKEN_TEXT_STYLE.leadingRatio,
+        OPINIONS_TEXT_STYLE.sizeScale * 0.66,
+        OPINIONS_TEXT_STYLE.excerpt,
+        OPINIONS_TEXT_STYLE.leadingRatio,
+        desaturate ? [0, 0, 72] : [0, 0, 100],
       );
-      return;
+      textCtx.restore();
+    } else {
+      s.noStroke();
+      s.fill(...VIEWS_PALETTE.missing, alpha);
+      s.rect(textPanel.x, textPanel.y, textPanel.w, textPanel.h);
     }
 
-    s.noStroke();
-    s.fill(...VIEWS_PALETTE.missing, alpha);
-    s.rect(entry.x, entry.y, entry.w, entry.h);
+    if (chain.drawing?.imageUrl) drawImage(chain.drawing.imageUrl, drawingPanel, alpha, desaturate);
+    else {
+      s.noStroke();
+      s.fill(...VIEWS_PALETTE.missing, alpha);
+      s.rect(drawingPanel.x, drawingPanel.y, drawingPanel.w, drawingPanel.h);
+    }
   };
 
   const brokenMetaForState = (chain, state = "image") => {
