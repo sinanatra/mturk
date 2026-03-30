@@ -111,7 +111,7 @@
   const GRID_FADE_MULTIPLIER = 200;
   const GRID_REVEAL_SPEED_MULTIPLIER = 3;
   const FOCUS_PADDING_RATIO = 0.5;
-  const NOTE_ZOOMOUT_LEAD_SEC = 0.45;
+  const NOTE_ZOOMOUT_LEAD_SEC = 2.8;
   const SHARED_CHAPTER_LEGEND_TEXT = "Who is working for Amazon Mechanical Turk?";
 
   let p5CanvasEl = null;
@@ -1643,13 +1643,15 @@
       } else {
         setCameraTargetForSketch(target, now);
         const cameraFollowMs =
-          forcedFocusRecordId && viewState === "focus"
-            ? Math.max(2200, effectiveFocusAdvanceMs * 3.2)
-            : phase.mode === "broken" &&
-                viewState === "broken-seq" &&
-                anchorDrivenNoteMode
-              ? Math.max(900, Math.min(2200, effectiveFocusAdvanceMs * 0.28))
-            : effectiveFocusAdvanceMs;
+          isReleasingZoomTo
+            ? Math.min(effectiveFocusAdvanceMs, 1800)
+            : forcedFocusRecordId && viewState === "focus"
+              ? Math.max(2200, effectiveFocusAdvanceMs * 3.2)
+              : phase.mode === "broken" &&
+                  viewState === "broken-seq" &&
+                  anchorDrivenNoteMode
+                ? Math.max(900, Math.min(2200, effectiveFocusAdvanceMs * 0.28))
+              : effectiveFocusAdvanceMs;
         tickCameraForSketch(now, viewState, cameraFollowMs);
       }
 

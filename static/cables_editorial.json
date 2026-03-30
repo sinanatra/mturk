@@ -439,7 +439,7 @@
       "phase": "screens-focus",
       "mode": "time",
       "active": true,
-      "durationSec": 7,
+      "durationSec": 12,
       "text": "A bed behind the desk. A kitchen table used as a workstation. Night visible through a window.",
       "anchorId": "screens-89",
       "zoomTo": { "x": 336.8, "y": -405.02, "scale": 4 }
@@ -449,7 +449,7 @@
       "phase": "screens-focus",
       "mode": "time",
       "active": true,
-      "durationSec": 9,
+      "durationSec": 12,
       "text": "These elements are incidental, but they reveal conditions of labor and identity. When datasets are cleaned, these traces are removed. Here they remain visible.",
       "anchorId": "screens-36",
       "zoomTo": { "x": 348.09, "y": -34.71, "scale": 5 }
@@ -459,7 +459,7 @@
       "phase": "screens-focus",
       "mode": "time",
       "active": true,
-      "durationSec": 9,
+      "durationSec": 15,
       "text": "The image of a desk becomes more than documentation of a workspace.",
       "anchorId": "screens-7",
       "zoomTo": { "x": -302.34, "y": -550.32, "scale": 5 }
@@ -469,7 +469,7 @@
       "phase": "screens-focus",
       "mode": "time",
       "active": true,
-      "durationSec": 9,
+      "durationSec": 12,
       "text": "It shows how domestic space and paid micro-labor overlap.",
       "anchorId": "screens-85"
     },

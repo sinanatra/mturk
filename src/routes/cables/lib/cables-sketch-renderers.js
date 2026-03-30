@@ -1,4 +1,5 @@
 import {
+  BROKEN_TEXT_STYLE,
   OPINIONS_TEXT_STYLE,
   VIEWS_PALETTE,
   excerpt,
@@ -29,42 +30,27 @@ export function tickCamera(camera, now, viewState = "focus", focusAdvanceMs = 98
 
   const dx = camera.toX - camera.x;
   const dy = camera.toY - camera.y;
-  const distance = Math.hypot(dx, dy);
   const ds = camera.toScale - camera.scale;
 
-  if (viewState === "focus" || viewState === "broken-seq") {
-    const followMs =
-      viewState === "broken-seq"
-        ? Math.max(900, Math.min(5200, focusAdvanceMs * 0.85))
+  // Exponential decay for all states — grid floats back to overview,
+  // focus/broken-seq follow at a pace tied to advance timing.
+  const followMs =
+    viewState === "broken-seq"
+      ? Math.max(900, Math.min(5200, focusAdvanceMs * 0.85))
+      : viewState === "grid"
+        ? 1800
         : Math.max(120, Math.min(1200, focusAdvanceMs * 0.22));
-    const posBlend = Math.min(1, dt / followMs);
-    const scaleBlend = Math.min(1, dt / Math.max(90, followMs * 0.72));
-    camera.x += dx * posBlend;
-    camera.y += dy * posBlend;
-    camera.scale += ds * scaleBlend;
-    return;
-  }
 
-  const posSpeed = viewState === "grid" ? 0.09 : 0.045;
-  const scaleSpeed = viewState === "grid" ? 0.00018 : 0.0003;
-  const maxPosStep = posSpeed * dt;
-  if (distance <= maxPosStep || distance === 0) {
-    camera.x = camera.toX;
-    camera.y = camera.toY;
-  } else {
-    const t = maxPosStep / distance;
-    camera.x += dx * t;
-    camera.y += dy * t;
-  }
-  const maxScaleStep = scaleSpeed * dt;
-  if (Math.abs(ds) <= maxScaleStep) {
-    camera.scale = camera.toScale;
-  } else {
-    camera.scale += Math.sign(ds) * maxScaleStep;
-  }
+  const posBlend = Math.min(1, dt / followMs);
+  const scaleBlend = Math.min(1, dt / Math.max(90, followMs * 0.72));
+  camera.x += dx * posBlend;
+  camera.y += dy * posBlend;
+  camera.scale += ds * scaleBlend;
 }
 
 export function createSketchRenderers({ s, ensureImage, visualState }) {
+  const wrapLinesCache = new Map();
+
   const drawImage = (url, entry, alpha = 1, desaturate = false) => {
     const image = ensureImage(s, url);
     if (!image) {
@@ -83,9 +69,9 @@ export function createSketchRenderers({ s, ensureImage, visualState }) {
     const ctx = s.drawingContext;
     ctx.save();
     if (desaturate) ctx.filter = "grayscale(1)";
-    s.tint(255, 255 * alpha);
+    if (alpha < 1) s.tint(255, 255 * alpha);
     s.image(image, x, y, drawW, drawH);
-    s.noTint();
+    if (alpha < 1) s.noTint();
     ctx.restore();
   };
 
@@ -224,9 +210,13 @@ export function createSketchRenderers({ s, ensureImage, visualState }) {
     const index = Math.min(frames.length - 1, Math.floor(elapsedMs / segmentMs));
     const localMs = elapsedMs - index * segmentMs;
     const useFade = visual.crossfade !== false;
-    const fadeMs = Math.max(80, Math.min(220, segmentMs * 0.18));
+    const fadeMs = Math.max(120, Math.min(400, segmentMs * 0.28));
     const alpha = useFade ? Math.max(0, Math.min(1, localMs / fadeMs)) : 1;
 
+    if (useFade && index > 0 && alpha < 1) {
+      const prev = ensureImage(s, frames[index - 1]);
+      drawStageImageCover(prev, stageX, stageY, stageSize, 1 - alpha);
+    }
     const current = ensureImage(s, frames[index]);
     drawStageImageCover(current, stageX, stageY, stageSize, alpha);
     visualState.lastVisualNoteId = noteId;
@@ -341,7 +331,14 @@ export function createSketchRenderers({ s, ensureImage, visualState }) {
     if (mode === "center") {
       const blockW = Math.max(1, entry.w * 0.88);
       const maxLines = Math.max(1, Math.floor((entry.h * 0.88) / leading));
-      let lines = wrapLines(textBody, blockW);
+      const cacheKey = `${textBody}|${Math.round(appliedSize * 10)}|${Math.round(blockW)}`;
+      let lines = wrapLinesCache.get(cacheKey);
+      if (!lines) {
+        lines = wrapLines(textBody, blockW);
+        if (wrapLinesCache.size > 300) wrapLinesCache.clear();
+        wrapLinesCache.set(cacheKey, lines);
+      }
+      lines = lines.slice();
       if (lines.length > maxLines) {
         lines = lines.slice(0, maxLines);
         lines[maxLines - 1] = fitLineWithEllipsis(lines[maxLines - 1], blockW);
@@ -370,27 +367,19 @@ export function createSketchRenderers({ s, ensureImage, visualState }) {
     const blockW = Math.max(1, entry.w - padX * 2);
     const approxLines = Math.max(1, Math.ceil(s.textWidth(textBody) / Math.max(1, blockW)));
     const blockH = Math.max(appliedSize + 2, Math.min(entry.h, approxLines * leading + 2));
-    const blockX = mode === "center" ? entry.x - blockW / 2 : boxX;
-    const blockY = mode === "center" ? entry.y - blockH / 2 : boxY;
 
     s.noStroke();
     s.fill(0, 0, 0, 1);
-    s.rect(blockX, blockY, blockW, blockH);
+    s.rect(boxX, boxY, blockW, blockH);
 
     const ctx = s.drawingContext;
     ctx.save();
     ctx.beginPath();
-    ctx.rect(blockX, blockY, blockW, blockH);
+    ctx.rect(boxX, boxY, blockW, blockH);
     ctx.clip();
 
     s.fill(...textColor, alpha);
-    s.text(
-      textBody,
-      mode === "center" ? blockX + blockW / 2 : blockX + padX,
-      mode === "center" ? blockY + blockH / 2 : blockY + padY,
-      mode === "center" ? blockW : Math.max(1, blockW - padX * 2),
-      mode === "center" ? blockH : Math.max(1, blockH - padY * 2),
-    );
+    s.text(textBody, boxX + padX, boxY + padY, Math.max(1, blockW - padX * 2), Math.max(1, blockH - padY * 2));
     ctx.restore();
     s.pop();
   };
@@ -450,9 +439,9 @@ export function createSketchRenderers({ s, ensureImage, visualState }) {
         false,
         alpha,
         "center",
-        OPINIONS_TEXT_STYLE.sizeScale * 0.66,
-        OPINIONS_TEXT_STYLE.excerpt,
-        OPINIONS_TEXT_STYLE.leadingRatio,
+        BROKEN_TEXT_STYLE.sizeScale * 0.66,
+        BROKEN_TEXT_STYLE.excerpt,
+        BROKEN_TEXT_STYLE.leadingRatio,
         desaturate ? [0, 0, 72] : [0, 0, 100],
       );
       textCtx.restore();
