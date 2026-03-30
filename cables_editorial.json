@@ -1,26 +1,27 @@
 {
   "intro": {
-    "windows": "What can you see from outside of the windows?",
-    "screens": "What is your working setup?",
-    "opinions": "What do you like and detest about working for Amazon Mechanical Turk?\n Please share your honest feelings and opinions on the platform.",
-    "broken": "Worker 1 uploads an image. Worker 2 describes the image in text. \n Worker 3 draws only from that written description."
+    "chapterTitles": {
+      "windows": "What do you see outside your window?",
+      "screens": "What is your working setup?",
+      "opinions": "How is it working on this platform?",
+      "broken": "Desribe the image. Draw the scene."
+    }
   },
   "notes": [
-    {
-      "id": "note-windows-grid-1",
-      "phase": "windows-grid",
-      "mode": "time",
-      "active": true,
-      "durationSec": 4,
-      "text": "Who is working for Amazon Mechanical Turk?"
-    },
     {
       "id": "note-windows-grid-2",
       "phase": "windows-grid",
       "mode": "time",
       "active": true,
       "durationSec": 12,
-      "text": "Amazon Mechanical Turk is a marketplace for paid microtasks, introduced in 2005 and named after the 18th century chess automaton that appeared autonomous while a human operator was hidden inside the cabinet."
+      "text": "Amazon Mechanical Turk is a marketplace for paid microtasks, introduced in 2005 and named after the 18th century chess automaton that appeared autonomous while a human operator was hidden inside the cabinet.",
+      "visual": {
+        "mode": "image",
+        "hideGrid": true,
+        "fadeInMs": 4000,
+        "widthRatio": 0.4,
+        "images": ["/mturk.png"]
+      }
     },
     {
       "id": "note-windows-grid-3",
@@ -28,7 +29,14 @@
       "mode": "time",
       "active": true,
       "durationSec": 5,
-      "text": "The machine seemed intelligent but intelligence and labour was concealed."
+      "text": "The machine seemed intelligent but intelligence and labour was concealed.",
+      "visual": {
+        "mode": "image",
+        "hideGrid": true,
+        "fadeInMs": 0,
+        "widthRatio": 0.4,
+        "images": ["/mturk.png"]
+      }
     },
     {
       "id": "note-windows-grid-4",
@@ -36,23 +44,35 @@
       "mode": "time",
       "active": true,
       "durationSec": 11,
-      "text": "On the platform, individuals complete small units of work that machines cannot yet perform. Much of this work contributes to the creation of datasets used to train machine learning systems."
+      "text": "On the platform, individuals complete small units of work that machines cannot yet perform. Much of this work contributes to the creation of datasets used to train machine learning systems.",
+      "visual": {
+        "mode": "blackout",
+        "hideGrid": true
+      }
     },
     {
       "id": "note-windows-grid-5",
       "phase": "windows-grid",
       "mode": "time",
       "active": true,
-      "durationSec": 4,
-      "text": "Image tagging. Transcription. Categorization. Short descriptions. Moderation."
+      "durationSec": 5,
+      "text": "Image tagging. Transcription. Categorization. Short descriptions. Moderation.",
+      "visual": {
+        "mode": "blackout",
+        "hideGrid": true
+      }
     },
     {
       "id": "note-windows-grid-6",
       "phase": "windows-grid",
       "mode": "time",
       "active": true,
-      "durationSec": 3,
-      "text": "Repetitive actions compensated in cents."
+      "durationSec": 5,
+      "text": "Repetitive actions compensated in cents.",
+      "visual": {
+        "mode": "blackout",
+        "hideGrid": true
+      }
     },
     {
       "id": "note-windows-grid-7",
@@ -60,7 +80,14 @@
       "mode": "time",
       "active": true,
       "durationSec": 7,
-      "text": "To understand how this operates from within, I decided to create an account as a requester."
+      "text": "To understand how this operates from within, I decided to create an account as a requester.",
+      "visual": {
+        "mode": "image",
+        "hideGrid": true,
+        "fadeInMs": 0.4,
+        "widthRatio": 0.9,
+        "images": ["/interface.png"]
+      }
     },
     {
       "id": "note-windows-grid-8",
@@ -68,27 +95,49 @@
       "mode": "time",
       "active": true,
       "durationSec": 7,
-      "text": "That allowed me to define instructions, set payment, and decide what would count as acceptable work."
+      "text": "That allowed me to define instructions, set payment, and decide what would count as acceptable work.",
+      "visual": {
+        "mode": "image",
+        "hideGrid": true,
+        "fadeInMs": 0,
+        "widthRatio": 0.9,
+        "images": ["/interface.png"]
+      }
     },
     {
       "id": "note-windows-grid-9",
       "phase": "windows-grid",
       "mode": "time",
       "active": true,
-      "durationSec": 7,
-      "text": "I started by asking for a photograph of the view from outside the window. I offered $0.20."
+      "durationSec": 15,
+      "text": "I started by asking for a photograph of the view from outside the window. I offered $0.20.",
+      "visual": {
+        "mode": "image",
+        "hideGrid": true,
+        "fadeInMs": 0.4,
+        "widthRatio": 0.8,
+        "images": ["/task1.jpeg"]
+      }
     },
     {
-      "id": "note-windows-focus-1",
-      "phase": "windows-focus",
+      "id": "note-windows-grid-10",
+      "phase": "windows-grid",
+      "mode": "time",
+      "active": true,
+      "durationSec": 10,
+      "text": "I collected 203 pictures in a few hours. \nThe initial goal had been 100."
+    },
+    {
+      "id": "note-windows-grid-11",
+      "phase": "windows-grid",
       "mode": "time",
       "active": true,
       "durationSec": 7,
       "text": "Before posting the request, I watched YouTube tutorials and read Reddit threads where workers exchange strategies."
     },
     {
-      "id": "note-windows-focus-2",
-      "phase": "windows-focus",
+      "id": "note-windows-grid-12",
+      "phase": "windows-grid",
       "mode": "time",
       "active": true,
       "durationSec": 7,
@@ -119,12 +168,12 @@
       "text": "After completing it, they received a code to enter back into the platform and claim the reward."
     },
     {
-      "id": "note-windows-focus-6",
+      "id": "note-windows-focus-5-pause-beat",
       "phase": "windows-focus",
       "mode": "time",
       "active": true,
-      "durationSec": 6,
-      "text": "With this round, I collected 203 pictures. The initial goal had been 100."
+      "durationSec": 5,
+      "text": ""
     },
     {
       "id": "note-windows-focus-7",
@@ -139,7 +188,7 @@
       "phase": "windows-focus",
       "mode": "time",
       "active": true,
-      "durationSec": 4,
+      "durationSec": 5,
       "text": "Several entries were duplicated, sometimes more than once."
     },
     {
@@ -167,6 +216,14 @@
       "text": "These gestures are not loud refusals. They are adjustments inside constraints. A form of micro-resistance embedded in routine practice."
     },
     {
+      "id": "note-windows-focus-11-pause-beat",
+      "phase": "windows-focus",
+      "mode": "time",
+      "active": true,
+      "durationSec": 5,
+      "text": ""
+    },
+    {
       "id": "note-windows-focus-12",
       "phase": "windows-focus",
       "mode": "time",
@@ -191,6 +248,14 @@
       "text": "I asked for a view outward. The images also revealed the interior."
     },
     {
+      "id": "note-windows-focus-14-pause-beat",
+      "phase": "windows-focus",
+      "mode": "time",
+      "active": true,
+      "durationSec": 5,
+      "text": ""
+    },
+    {
       "id": "note-windows-focus-15",
       "phase": "windows-focus",
       "mode": "time",
@@ -203,7 +268,7 @@
       "phase": "windows-focus",
       "mode": "time",
       "active": true,
-      "durationSec": 3,
+      "durationSec": 5,
       "text": "Approval transferred money. Rejection withheld it."
     },
     {
@@ -211,7 +276,7 @@
       "phase": "windows-focus",
       "mode": "time",
       "active": true,
-      "durationSec": 4,
+      "durationSec": 5,
       "text": "In both cases, the file remained accessible to me."
     },
     {
@@ -222,12 +287,13 @@
       "durationSec": 6,
       "text": "The material does not disappear when payment is refused. The archive expands regardless."
     },
+
     {
       "id": "note-windows-focus-19",
       "phase": "windows-focus",
       "mode": "time",
       "active": true,
-      "durationSec": 60,
+      "durationSec": 120,
       "text": ""
     },
     {
@@ -235,136 +301,177 @@
       "phase": "screens-grid",
       "mode": "time",
       "active": true,
-      "durationSec": 7,
-      "text": "More than one year later, I returned to the platform and asked for photographs of working setups."
+      "durationSec": 12,
+      "text": "More than one year later, I returned to the platform and asked for photographs of working setups.",
+      "visual": {
+        "mode": "blackout",
+        "hideGrid": true
+      }
     },
     {
       "id": "note-screens-grid-2",
       "phase": "screens-grid",
       "mode": "time",
       "active": true,
-      "durationSec": 4,
-      "text": "I uploaded my own desk as a reference image."
+      "durationSec": 10,
+      "text": "I uploaded my own desk as a reference image.",
+      "visual": {
+        "mode": "image",
+        "hideGrid": true,
+        "fadeInMs": 4000,
+        "widthRatio": 0.8,
+        "images": ["/images/1_R0afcqeLfmNfyeawBdGQ9Xclosiq5Bp.jpg"]
+      }
     },
+
     {
-      "id": "note-screens-grid-3",
+      "id": "note-screens-grid-2",
       "phase": "screens-grid",
       "mode": "time",
       "active": true,
-      "durationSec": 4,
-      "text": "The first submission I received was the same image."
-    },
-    {
-      "id": "note-screens-grid-4",
-      "phase": "screens-grid",
-      "mode": "time",
-      "active": true,
-      "durationSec": 3,
-      "text": "The next submission was identical."
-    },
-    {
-      "id": "note-screens-grid-5",
-      "phase": "screens-grid",
-      "mode": "time",
-      "active": true,
-      "durationSec": 3,
-      "text": "Then it appeared again."
-    },
-    {
-      "id": "note-screens-grid-6",
-      "phase": "screens-grid",
-      "mode": "time",
-      "active": true,
-      "durationSec": 3,
-      "text": "The example became the dominant response."
-    },
-    {
-      "id": "note-screens-focus-1",
-      "phase": "screens-focus",
-      "mode": "time",
-      "active": true,
-      "durationSec": 4,
+      "durationSec": 5,
       "text": "I asked for 100 images and received 140."
     },
+
     {
-      "id": "note-screens-focus-2",
+      "id": "note-screens-focus-screens-35",
       "phase": "screens-focus",
       "mode": "time",
       "active": true,
-      "durationSec": 4,
-      "text": "Submitting the example requires no additional effort."
+      "durationSec": 5,
+      "text": "The first submission I received was the same image.",
+      "anchorId": "screens-35"
     },
     {
-      "id": "note-screens-focus-3",
+      "id": "note-screens-focus-screens-18-2",
+      "phase": "screens-focus",
+      "mode": "time",
+      "active": true,
+      "durationSec": 5,
+      "text": "The next submission was identical.",
+      "anchorId": "screens-18"
+    },
+    {
+      "id": "note-screens-focus-screens-10-2",
+      "phase": "screens-focus",
+      "mode": "time",
+      "active": true,
+      "durationSec": 5,
+      "text": "Then it appeared again.",
+      "anchorId": "screens-17"
+    },
+    {
+      "id": "note-screens-focus-screens-39",
+      "phase": "screens-focus",
+      "mode": "time",
+      "active": true,
+      "durationSec": 5,
+      "text": "The example became the dominant response.",
+      "anchorId": "screens-100"
+    },
+    {
+      "id": "note-screens-focus-screens-18-pause-beat",
+      "phase": "screens-focus",
+      "mode": "time",
+      "active": true,
+      "durationSec": 5,
+      "text": "",
+      "anchorId": "screens-100"
+    },
+
+    {
+      "id": "note-screens-focus-screens-17",
+      "phase": "screens-focus",
+      "mode": "time",
+      "active": true,
+      "durationSec": 5,
+      "text": "Submitting the example requires no additional effort.",
+      "anchorId": "screens-17"
+    },
+    {
+      "id": "note-screens-focus-screens-45",
       "phase": "screens-focus",
       "mode": "time",
       "active": true,
       "durationSec": 10,
-      "text": "By default, submissions are automatically approved after a couple of days unless manually reviewed. Workers know this. They understand that scale makes detailed review unlikely."
+      "text": "By default, submissions are automatically approved after a couple of days unless manually reviewed. Workers know this. They understand that scale makes detailed review unlikely.",
+      "anchorId": "screens-45"
     },
     {
-      "id": "note-screens-focus-4",
+      "id": "note-screens-focus-screens-49",
       "phase": "screens-focus",
       "mode": "time",
       "active": true,
       "durationSec": 8,
-      "text": "With a few hundred entries, I can still check one by one. At a larger scale, attention shifts to metrics."
+      "text": "With a few hundred entries, I can still check one by one. At a larger scale, attention shifts to metrics.",
+      "anchorId": "screens-5"
     },
     {
-      "id": "note-screens-focus-5",
+      "id": "note-screens-focus-screens-74",
       "phase": "screens-focus",
       "mode": "time",
       "active": true,
-      "durationSec": 4,
-      "text": "The interface reduces each submission to a binary decision."
+      "durationSec": 10,
+      "text": "The interface reduces each submission to a binary decision.",
+      "anchorId": "screens-86"
     },
     {
-      "id": "note-screens-focus-6",
+      "id": "note-screens-focus-screens-83",
       "phase": "screens-focus",
       "mode": "time",
       "active": true,
-      "durationSec": 3,
-      "text": "Approve. Reject."
+      "durationSec": 8,
+      "text": "Approve. Reject.",
+      "anchorId": "screens-13"
     },
     {
-      "id": "note-screens-focus-7",
+      "id": "note-screens-focus-screens-10",
       "phase": "screens-focus",
       "mode": "time",
       "active": true,
       "durationSec": 12,
-      "text": "Yet each image carries traces that exceed the instruction: open tabs, background applications, battery level, the type of computer, and glimpses of the room in which the work is taking place."
+      "text": "Yet each image carries traces that exceed the instruction: open tabs, background applications, battery level, the type of computer, and glimpses of the room in which the work is taking place.",
+      "anchorId": "screens-34",
+      "zoomTo": { "x": 646.56, "y": -512.53, "scale": 4 }
     },
     {
-      "id": "note-screens-focus-8",
+      "id": "note-screens-focus-screens-108",
       "phase": "screens-focus",
       "mode": "time",
       "active": true,
-      "durationSec": 7,
-      "text": "A bed behind the desk. A kitchen table used as a workstation. Night visible through a window."
+      "durationSec": 12,
+      "text": "A bed behind the desk. A kitchen table used as a workstation. Night visible through a window.",
+      "anchorId": "screens-89",
+      "zoomTo": { "x": 336.8, "y": -405.02, "scale": 4 }
     },
     {
-      "id": "note-screens-focus-9",
+      "id": "note-screens-focus-screens-81",
       "phase": "screens-focus",
       "mode": "time",
       "active": true,
-      "durationSec": 9,
-      "text": "These elements are incidental, but they reveal conditions of labor. When datasets are cleaned, these traces are removed. Here they remain visible."
+      "durationSec": 12,
+      "text": "These elements are incidental, but they reveal conditions of labor and identity. When datasets are cleaned, these traces are removed. Here they remain visible.",
+      "anchorId": "screens-36",
+      "zoomTo": { "x": 348.09, "y": -34.71, "scale": 5 }
     },
     {
-      "id": "note-screens-focus-10",
+      "id": "note-screens-focus-screens-57",
       "phase": "screens-focus",
       "mode": "time",
       "active": true,
-      "durationSec": 9,
-      "text": "The image of a desk becomes more than documentation of a workspace. It becomes a fragment of domestic space entangled with digital piecework."
+      "durationSec": 15,
+      "text": "The image of a desk becomes more than documentation of a workspace.",
+      "anchorId": "screens-7",
+      "zoomTo": { "x": -302.34, "y": -550.32, "scale": 5 }
     },
     {
-      "id": "note-screens-focus-11",
+      "id": "note-screens-focus-screens-57",
       "phase": "screens-focus",
       "mode": "time",
       "active": true,
-      "durationSec": 60,
-      "text": ""
+      "durationSec": 12,
+      "text": "It shows how domestic space and paid micro-labor overlap.",
+      "anchorId": "screens-85"
     },
     {
       "id": "note-opinions-grid-1",
@@ -407,7 +514,7 @@
       "text": "Master status is assigned and maintained through continuous performance monitoring."
     },
     {
-      "id": "note-opinions-focus-2",
+      "id": "note-opinions-focus-opinions-16",
       "phase": "opinions-focus",
       "mode": "time",
       "active": true,
@@ -416,7 +523,7 @@
       "text": "One worker describes MTurk as both survival and strain."
     },
     {
-      "id": "note-opinions-focus-4",
+      "id": "note-opinions-focus-opinions-9",
       "phase": "opinions-focus",
       "mode": "time",
       "active": true,
@@ -425,7 +532,7 @@
       "text": "Another answer is direct: there is no protection when requesters reject."
     },
     {
-      "id": "note-opinions-focus-5",
+      "id": "note-opinions-focus-opinions-2",
       "phase": "opinions-focus",
       "mode": "time",
       "active": true,
@@ -434,7 +541,16 @@
       "anchorId": "opinions-2"
     },
     {
-      "id": "note-opinions-focus-6",
+      "id": "note-opinions-focus-opinions-2-pause-beat",
+      "phase": "opinions-focus",
+      "mode": "time",
+      "active": true,
+      "durationSec": 5,
+      "text": "",
+      "anchorId": "opinions-2"
+    },
+    {
+      "id": "note-opinions-focus-opinions-11",
       "phase": "opinions-focus",
       "mode": "time",
       "active": true,
@@ -443,16 +559,16 @@
       "anchorId": "opinions-11"
     },
     {
-      "id": "note-opinions-focus-7",
+      "id": "note-opinions-focus-opinions-10",
       "phase": "opinions-focus",
       "mode": "time",
       "active": true,
       "durationSec": 32,
-      "text": "Workers are aware of this. They share information on forums. They warn each other about unreliable requesters. They decide which assignments to avoid.",
+      "text": "Long-term workers keep balancing convenience and extra income against bots, broken tasks, and lost time.",
       "anchorId": "opinions-10"
     },
     {
-      "id": "note-opinions-focus-8",
+      "id": "note-opinions-focus-opinions-29",
       "phase": "opinions-focus",
       "mode": "time",
       "active": true,
@@ -461,40 +577,67 @@
       "anchorId": "opinions-29"
     },
     {
-      "id": "note-opinions-focus-9",
+      "id": "note-opinions-focus-opinions-29-pause-beat",
+      "phase": "opinions-focus",
+      "mode": "time",
+      "active": true,
+      "durationSec": 5,
+      "text": "",
+      "anchorId": "opinions-29"
+    },
+    {
+      "id": "note-opinions-focus-opinions-79",
       "phase": "opinions-focus",
       "mode": "time",
       "active": true,
       "durationSec": 22,
-      "anchorId": "opinions-98",
-      "text": "This is visible in many answers."
+      "anchorId": "opinions-79",
+      "text": "This positive register is visible in many answers: flexibility, side income, autonomy."
     },
     {
-      "id": "note-opinions-focus-10",
+      "id": "note-opinions-focus-opinions-47",
       "phase": "opinions-focus",
       "mode": "time",
       "active": true,
       "durationSec": 9,
       "anchorId": "opinions-47",
-      "text": "Another recurring line stays positive and cautious, likely written to avoid risk."
+      "text": "A recurring line stays positive and careful, likely written to avoid risk."
     },
     {
-      "id": "note-opinions-focus-11",
+      "id": "note-opinions-focus-opinions-40",
       "phase": "opinions-focus",
       "mode": "time",
       "active": true,
       "durationSec": 16,
-      "anchorId": "opinions-25",
-      "text": "The careful tone is part of platform survival."
+      "anchorId": "opinions-40",
+      "text": "Even praise is often framed in safe, generic language."
     },
     {
-      "id": "note-opinions-focus-12",
+      "id": "note-opinions-focus-opinions-121",
       "phase": "opinions-focus",
       "mode": "time",
       "active": true,
       "durationSec": 24,
-      "text": "The same interface that allows me to reject submissions structures how workers respond. They write carefully. They anticipate evaluation. They adjust their tone.",
-      "anchorId": "opinions-15"
+      "text": "The interface still shapes tone: workers phrase criticism carefully, and cushion it with polite language.",
+      "anchorId": "opinions-121"
+    },
+    {
+      "id": "note-opinions-focus-opinions-121-pause-beat",
+      "phase": "opinions-focus",
+      "mode": "time",
+      "active": true,
+      "durationSec": 5,
+      "text": "",
+      "anchorId": "opinions-121"
+    },
+    {
+      "id": "note-opinions-focus-13",
+      "phase": "opinions-focus",
+      "mode": "time",
+      "active": true,
+      "durationSec": 30,
+      "text": "",
+      "anchorId": "opinions-121"
     },
     {
       "id": "note-broken-grid-1",
@@ -502,14 +645,14 @@
       "mode": "time",
       "active": true,
       "durationSec": 7,
-      "text": "I selected the window photographs and uploaded them again, asking workers to describe what they saw."
+      "text": "Then, I selected the window photographs and uploaded them again, asking workers to describe what they saw."
     },
     {
       "id": "note-broken-grid-2",
       "phase": "broken-grid",
       "mode": "time",
       "active": true,
-      "durationSec": 4,
+      "durationSec": 5,
       "text": "Hundreds of descriptions arrived in less than one hour."
     },
     {
@@ -525,144 +668,219 @@
       "phase": "broken-grid",
       "mode": "time",
       "active": true,
-      "durationSec": 4,
+      "durationSec": 5,
       "text": "The sequence was simple: image, text, drawing."
     },
     {
-      "id": "note-broken-seq-1",
+      "id": "note-broken-focus-merged-broken-58",
       "phase": "broken-broken-seq",
       "mode": "time",
       "active": true,
       "durationSec": 6,
-      "text": "Some descriptions were detailed paragraphs. Others were short. Some consisted only of tags."
+      "text": "Some descriptions were detailed paragraphs.",
+      "anchorId": "merged-broken-58"
     },
     {
-      "id": "note-broken-seq-2",
-      "phase": "broken-broken-seq",
-      "mode": "time",
-      "active": true,
-      "durationSec": 5,
-      "text": "Houses and trees. NICE PHOTO. A bike and some trees. GARDEN. car."
-    },
-    {
-      "id": "note-broken-seq-3",
-      "phase": "broken-broken-seq",
-      "mode": "time",
-      "active": true,
-      "durationSec": 8,
-      "text": "When asked to draw, several workers did not draw. They wrote the description again. Others reduced the scene to recognizable objects."
-    },
-    {
-      "id": "note-broken-seq-4",
-      "phase": "broken-broken-seq",
-      "mode": "time",
-      "active": true,
-      "durationSec": 3,
-      "text": "Cars. Bus. People. Tree."
-    },
-    {
-      "id": "note-broken-seq-5",
+      "id": "note-broken-focus-merged-broken-94",
       "phase": "broken-broken-seq",
       "mode": "time",
       "active": true,
       "durationSec": 6,
-      "text": "This does not necessarily indicate misunderstanding. It reflects how work on the platform is structured."
+      "text": "Others were short.",
+      "anchorId": "merged-broken-4"
     },
     {
-      "id": "note-broken-seq-6",
+      "id": "note-broken-focus-merged-broken-3",
       "phase": "broken-broken-seq",
       "mode": "time",
       "active": true,
-      "durationSec": 8,
-      "text": "Workers are repeatedly asked to identify and confirm objects. Drawing is not a common or rewarded task. Labeling is."
+      "durationSec": 10,
+      "text": "Some consisted only of tags.",
+      "anchorId": "merged-broken-110"
     },
     {
-      "id": "note-broken-seq-7",
-      "phase": "broken-broken-seq",
-      "mode": "time",
-      "active": true,
-      "durationSec": 8,
-      "text": "Instead of adapting to an unfamiliar instruction, some translated it into a format that is legible within the system."
-    },
-    {
-      "id": "note-broken-seq-8",
-      "phase": "broken-broken-seq",
-      "mode": "time",
-      "active": true,
-      "durationSec": 7,
-      "text": "With each step, context narrowed. The atmosphere faded. Spatial relations disappeared. The scene became extractable elements."
-    },
-    {
-      "id": "note-broken-seq-9",
-      "phase": "broken-broken-seq",
-      "mode": "time",
-      "active": true,
-      "durationSec": 4,
-      "text": "This transformation follows the logic of the platform."
-    },
-    {
-      "id": "note-broken-seq-10",
-      "phase": "broken-broken-seq",
-      "mode": "time",
-      "active": true,
-      "durationSec": 4,
-      "text": "Between image and label something is removed."
-    },
-    {
-      "id": "note-broken-seq-11",
-      "phase": "broken-broken-seq",
-      "mode": "time",
-      "active": true,
-      "durationSec": 3,
-      "text": "That removal is structural."
-    },
-    {
-      "id": "note-broken-seq-12",
-      "phase": "broken-broken-seq",
-      "mode": "time",
-      "active": true,
-      "durationSec": 5,
-      "text": "Across windows, desks, and written testimonies, the same pattern is visible."
-    },
-    {
-      "id": "note-broken-seq-13",
+      "id": "note-broken-focus-merged-broken-154",
       "phase": "broken-broken-seq",
       "mode": "time",
       "active": true,
       "durationSec": 6,
-      "text": "People adapt. They adjust. They reuse. They simplify. They resist in small ways."
+      "text": "Houses and trees. NICE PHOTO. GARDEN. BUS.",
+      "anchorId": "merged-broken-154"
     },
     {
-      "id": "note-broken-seq-14",
+      "id": "note-broken-focus-merged-broken-179",
       "phase": "broken-broken-seq",
       "mode": "time",
       "active": true,
-      "durationSec": 3,
-      "text": "The platform appears automated."
+      "durationSec": 15,
+      "text": "When asked to draw, several workers did not draw. They wrote the description again.",
+      "anchorId": "merged-broken-179"
     },
     {
-      "id": "note-broken-seq-15",
+      "id": "note-broken-focus-merged-broken-3-2",
       "phase": "broken-broken-seq",
       "mode": "time",
       "active": true,
-      "durationSec": 4,
-      "text": "Inside it, labor is fragmented, distributed, and constantly recalibrated."
+      "durationSec": 6,
+      "text": " Others reduced the scene to recognizable objects. Cars. Bus. People. Tree.",
+      "anchorId": "merged-broken-44"
     },
     {
-      "id": "note-broken-seq-16",
+      "id": "note-broken-focus-merged-broken-7",
       "phase": "broken-broken-seq",
       "mode": "time",
       "active": true,
-      "durationSec": 5,
-      "text": "And within that recalibration, there is not only compliance, but agency."
+      "durationSec": 6,
+      "text": "This does not necessarily indicate misunderstanding. It reflects how work on the platform is structured.",
+      "anchorId": "merged-broken-5"
     },
-     {
-      "id": "note-broken-seq-17",
+    {
+      "id": "note-broken-focus-merged-broken-14",
       "phase": "broken-broken-seq",
       "mode": "time",
       "active": true,
-      "durationSec": 180,
-      "text": ""
+      "durationSec": 8,
+      "text": "Workers are repeatedly asked to identify and confirm objects. Drawing is not a common or rewarded task. Labeling is.",
+      "anchorId": "merged-broken-14"
+    },
+    {
+      "id": "note-broken-focus-merged-broken-17",
+      "phase": "broken-broken-seq",
+      "mode": "time",
+      "active": true,
+      "durationSec": 8,
+      "text": "Instead of adapting to an unfamiliar instruction, some translated it into a format that is legible within the system.",
+      "anchorId": "merged-broken-17"
+    },
+    {
+      "id": "note-broken-focus-merged-broken-90",
+      "phase": "broken-broken-seq",
+      "mode": "time",
+      "active": true,
+      "durationSec": 13,
+      "text": "With each step, context narrowed. The atmosphere faded. Spatial relations disappeared. The scene became extractable elements.",
+      "anchorId": "merged-broken-24"
+    },
+    {
+      "id": "note-broken-focus-merged-broken-110",
+      "phase": "broken-broken-seq",
+      "mode": "time",
+      "active": true,
+      "durationSec": 6,
+      "text": "This transformation follows the logic of the platform.",
+      "anchorId": "merged-broken-31"
+    },
+    {
+      "id": "note-broken-focus-merged-broken-118",
+      "phase": "broken-broken-seq",
+      "mode": "time",
+      "active": true,
+      "durationSec": 6,
+      "text": "Between image and label something is removed.",
+      "anchorId": "merged-broken-7"
+    },
+    {
+      "id": "note-broken-focus-merged-broken-119",
+      "phase": "broken-broken-seq",
+      "mode": "time",
+      "active": true,
+      "durationSec": 10,
+      "text": "That removal is structural.",
+      "anchorId": "merged-broken-39"
+    },
+    {
+      "id": "note-broken-focus-merged-broken-42",
+      "phase": "broken-broken-seq",
+      "mode": "time",
+      "active": true,
+      "durationSec": 10,
+      "text": "Across windows, desks, and written testimonies, the same pattern is visible.",
+      "anchorId": "merged-broken-42"
+    },
+    {
+      "id": "note-broken-focus-merged-broken-151",
+      "phase": "broken-broken-seq",
+      "mode": "time",
+      "active": true,
+      "durationSec": 10,
+      "text": "People adapt. They adjust. They reuse. They simplify. They resist in small ways.",
+      "anchorId": "merged-broken-62"
+    },
+    {
+      "id": "note-broken-focus-merged-broken-170",
+      "phase": "broken-broken-seq",
+      "mode": "time",
+      "active": true,
+      "durationSec": 6,
+      "text": "The platform appears automated.",
+      "anchorId": "merged-broken-83"
+    },
+    {
+      "id": "note-broken-focus-merged-broken-180",
+      "phase": "broken-broken-seq",
+      "mode": "time",
+      "active": true,
+      "durationSec": 6,
+      "text": "Inside it, labor is fragmented, distributed, and constantly recalibrated.",
+      "anchorId": "merged-broken-67"
+    },
+    {
+      "id": "note-broken-focus-merged-broken-178",
+      "phase": "broken-broken-seq",
+      "mode": "time",
+      "active": true,
+      "durationSec": 12,
+      "text": "And within that recalibration, there is not only compliance, but agency.",
+      "anchorId": "merged-broken-77"
+    },
+    {
+      "id": "note-worker-1",
+      "phase": "worker-attempt",
+      "mode": "time",
+      "durationSec": 8,
+      "text": "After collecting and reviewing, I tried to create a worker account."
+    },
+    {
+      "id": "note-worker-2",
+      "phase": "worker-attempt",
+      "mode": "time",
+      "durationSec": 8,
+      "text": "I wanted to earn back what I have spent on the platform."
+    },
+    {
+      "id": "note-worker-3",
+      "phase": "worker-attempt",
+      "mode": "time",
+      "durationSec": 6,
+      "text": "Access was denied.",
+      "visual": {
+        "mode": "image",
+        "hideGrid": true,
+        "fadeInMs": 2000,
+        "widthRatio": 0.8,
+        "images": ["/suspended.png"]
+      }
+    },
+    {
+      "id": "note-worker-3",
+      "phase": "worker-attempt",
+      "mode": "time",
+      "durationSec": 10,
+      "text": "I had defined the instructions. I had set the payment.\nI had decided what counted as acceptable work. ",
+      "visual": {
+        "mode": "image",
+        "hideGrid": true,
+        "fadeInMs": 2000,
+        "widthRatio": 0.8,
+        "images": ["/denied.png"]
+      }
+    },
+    {
+      "id": "note-worker-4",
+      "phase": "worker-attempt",
+      "mode": "time", 
+      "durationSec": 8,
+      "text": "But when I tried to switch sides, the system did not recognize me as a valid candidate."
     }
   ]
 }

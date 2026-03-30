@@ -1,0 +1,21 @@
+import{s as r,n as a,d as n,i as c,a as l,c as h,l as g,f as p}from"./DJs3jp0A.js";import{S as f,i as m}from"./uo_CIg3i.js";function u(s){let e,i=`<h1>Views of the working desk</h1> <h2>I asked the workers at Amazon Mechanical Turk to send me a photo of
+        their working setup. Here are the photos I received and the city they
+        were sent from.</h2> <figure><img src="/images/17q1w5g-NpNtT2LAPYULfyvQeNt_9hLC3.jpg" alt="Mechanical Turk" class="svelte-1gua0zx"/> <figcaption>Kozhikode, IN</figcaption></figure> <p>After more than one year from the first experiment, I logged into the
+        platform this time asking for photos of work desks, giving this as an
+        example:</p> <figure><img src="https://lh7-us.googleusercontent.com/oVphOAZ7pHj4qq8gx14SBRoW55DrcPPucsQ-3p4jFmYSSsYPZEivlfe106BQmdcirjJCggSr1zOLPvrR4HcPn3JRsILB4L4FKPYtPkkUJfhrCEnawb7OvLb9ApWTkcHG_IIQSX0T8OtTys8T_VcFqmOtn6tvWw" alt="Mechanical Turk" class="svelte-1gua0zx"/> <figcaption>My reference image.</figcaption></figure> <p>This is the first contribution I received.</p> <figure><img src="/images/1BKUpKvUYFcbuOopOiwEoRo2_9SOEaybF.jpg" alt="Mechanical Turk" class="svelte-1gua0zx"/> <figcaption>Location: US</figcaption></figure> <p>Again, I asked for 100 images and collected 140 at the end, where the
+        extra ones were mainly the example image I provided. By default, Amazon
+        Mechanical Turk automatically approves submissions after a period of
+        three days. This is probably why most of the material submitted does not
+        comply with the task. Quickly completed tasks in order to collect a
+        reward that is hopefully not checked. With a dataset of a few hundred
+        images, I can check each entry one by one, and in those three days I can
+        reject entries that are &#39;wrong&#39; by selecting the specific entry and
+        writing a few words in a textarea.</p> <figure><img src="./rejection.png" alt="Mechanical Turk" class="svelte-1gua0zx"/> <figcaption>Screenshot of the rejection form.</figcaption></figure> <figure><img src="/images/1BKUpKvUYFcbuOopOiwEoRo2_9SOEaybF.jpg" alt="Mechanical Turk" class="svelte-1gua0zx"/> <figcaption>The sample image, or screenshots of it appear multiple times as
+            submissions.</figcaption></figure> <p>However, the submitted material remains with me. I can still use it and
+        the additional, but inaccurate, data I collect is free labour. The review
+        process does not seem to be transparent. For all the assignments I have
+        refused so far, no worker has ever replied to me asking for an
+        explanation. I therefore wonder how many institutions exploit this
+        system, refusing payment but continuing to collect tagged data for free.
+        At the same time, if usually a third or half of the data collected is
+        junk, where does this random content end up?</p>`;return{c(){e=p("section"),e.innerHTML=i,this.h()},l(t){e=h(t,"SECTION",{class:!0,"data-svelte-h":!0}),g(e)!=="svelte-ume09b"&&(e.innerHTML=i),this.h()},h(){l(e,"class","desc svelte-1gua0zx")},m(t,o){c(t,e,o)},p:a,i:a,o:a,d(t){t&&n(e)}}}class w extends f{constructor(e){super(),m(this,e,null,u,r,{})}}export{w as T};
