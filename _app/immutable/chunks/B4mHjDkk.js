@@ -1,4 +1,4 @@
-import{s as r,n as a,d as n,i as c,a as l,c as h,l as g,f as p}from"./DJs3jp0A.js";import{S as f,i as m}from"./uo_CIg3i.js";function u(s){let e,i=`<h1>Views of the working desk</h1> <h2>I asked the workers at Amazon Mechanical Turk to send me a photo of
+import{s as r,n as a,d as n,i as c,a as l,c as h,l as g,f as p}from"./DgHW1UGl.js";import{S as f,i as m}from"./DSLBjMA8.js";function u(s){let e,i=`<h1>Views of the working desk</h1> <h2>I asked the workers at Amazon Mechanical Turk to send me a photo of
         their working setup. Here are the photos I received and the city they
         were sent from.</h2> <figure><img src="/images/17q1w5g-NpNtT2LAPYULfyvQeNt_9hLC3.jpg" alt="Mechanical Turk" class="svelte-1gua0zx"/> <figcaption>Kozhikode, IN</figcaption></figure> <p>After more than one year from the first experiment, I logged into the
         platform this time asking for photos of work desks, giving this as an

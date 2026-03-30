@@ -1,4 +1,4 @@
-import{s as n,n as o,d as r,i as c,a as h,c as l,l as d,f as u}from"./DJs3jp0A.js";import{S as f,i as m}from"./uo_CIg3i.js";function p(i){let e,a=`<h1>Views from outside the window</h1> <h2>I asked the workers at Amazon Mechanical Turk to send me a photo of
+import{s as n,n as o,d as r,i as c,a as h,c as l,l as d,f as u}from"./DgHW1UGl.js";import{S as f,i as m}from"./DSLBjMA8.js";function p(i){let e,a=`<h1>Views from outside the window</h1> <h2>I asked the workers at Amazon Mechanical Turk to send me a photo of
         their view out of the window for $0.20. Here are the photos I received
         and the city they were sent from.</h2>
 
