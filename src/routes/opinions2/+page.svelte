@@ -95,6 +95,8 @@
     dragStartY = 0;
   let camDragStartX = 0,
     camDragStartY = 0;
+  let touchStartDist = 0;
+  let touchStartScale = 1;
 
   const sketch = (s) => {
     s.preload = () => {
@@ -108,6 +110,59 @@
       s.rectMode(s.CENTER);
       if (font) s.textFont(font);
       s.frameRate(30);
+
+      // Touch handlers
+      if (browser && s.canvas) {
+        s.canvas.addEventListener("touchstart", (e) => {
+          if (showIntro) return;
+          e.preventDefault();
+          if (e.touches.length === 1) {
+            isDragging = true;
+            dragStartX = e.touches[0].clientX;
+            dragStartY = e.touches[0].clientY;
+            camDragStartX = camera.x;
+            camDragStartY = camera.y;
+          } else if (e.touches.length === 2) {
+            isDragging = false;
+            const dx = e.touches[0].clientX - e.touches[1].clientX;
+            const dy = e.touches[0].clientY - e.touches[1].clientY;
+            touchStartDist = Math.sqrt(dx * dx + dy * dy);
+            touchStartScale = camera.toScale;
+          }
+        });
+
+        s.canvas.addEventListener("touchmove", (e) => {
+          if (showIntro) return;
+          e.preventDefault();
+          if (e.touches.length === 1 && isDragging) {
+            const currentX = e.touches[0].clientX;
+            const currentY = e.touches[0].clientY;
+            camera.x = camDragStartX - (currentX - dragStartX) / camera.scale;
+            camera.y = camDragStartY - (currentY - dragStartY) / camera.scale;
+            camera.toX = camera.x;
+            camera.toY = camera.y;
+          } else if (e.touches.length === 2) {
+            const dx = e.touches[0].clientX - e.touches[1].clientX;
+            const dy = e.touches[0].clientY - e.touches[1].clientY;
+            const currentDist = Math.sqrt(dx * dx + dy * dy);
+            const factor = currentDist / touchStartDist;
+            const newScale = Math.max(1.2, Math.min(8, touchStartScale * factor));
+            
+            const touchCenterX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+            const touchCenterY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+            
+            const wx = (touchCenterX - s.width / 2) / camera.scale + camera.x;
+            const wy = (touchCenterY - s.height / 2) / camera.scale + camera.y;
+            camera.toScale = newScale;
+            camera.toX = wx - (touchCenterX - s.width / 2) / newScale;
+            camera.toY = wy - (touchCenterY - s.height / 2) / newScale;
+          }
+        });
+
+        s.canvas.addEventListener("touchend", (e) => {
+          isDragging = false;
+        });
+      }
     };
 
     s.mousePressed = () => {
@@ -328,7 +383,7 @@
   .overlayCard {
     position: relative;
     max-width: 80ch;
-    width: min(92vw, 1100px);
+    width: min(80vw, 1100px);
     padding: clamp(16px, 3vw, 28px);
     background: rgba(10, 10, 10, 0.9);
     border: 1px solid blue;
