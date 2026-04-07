@@ -7,6 +7,7 @@
   export let isRecording4K = false;
   export let recordingError = "";
   export let authoringHint = "";
+  export let subtitleScale = 1;
 
   const dispatch = createEventDispatcher();
 </script>
@@ -25,6 +26,18 @@
   <button type="button" on:click={() => dispatch("toggleRecording")}
     >{isRecording4K ? "Stop 4K Rec" : "Record 4K"}</button
   >
+  <label class="subtitleScaleLabel">
+    Sub size
+    <input
+      type="range"
+      min="0.5"
+      max="3"
+      step="0.05"
+      value={subtitleScale}
+      on:input={(e) => dispatch("subtitleScaleChange", +e.target.value)}
+    />
+    {subtitleScale.toFixed(2)}x
+  </label>
   {#if recordingError}
     <p class="metaWarn">{recordingError}</p>
   {/if}
@@ -74,6 +87,23 @@
     color: #838b85;
     font-size: 13px;
     cursor: pointer;
+  }
+
+  .subtitleScaleLabel {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    border: 1px solid #838b85;
+    padding: 4px 10px;
+    background: #000;
+    color: #838b85;
+    font-size: 13px;
+    white-space: nowrap;
+  }
+
+  .subtitleScaleLabel input[type="range"] {
+    width: 80px;
+    accent-color: #838b85;
   }
 
 </style>

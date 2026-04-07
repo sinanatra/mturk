@@ -156,7 +156,7 @@
 
 <style>
     section {
-        width: 100%;
+        /* width: 100%; */
         max-width: 330px;
         background: var(--color-1);
         padding: 10px;

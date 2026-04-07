@@ -8,6 +8,7 @@
   export let stageSizePx = 0;
   export let stageSubtitleYPx = 0;
   export let editorialWidthPx = 0;
+  export let subtitleScale = 1;
 </script>
 
 {#if activeChapterStep || activeChapterTitle || activeChapterDescription}
@@ -32,7 +33,7 @@
     class="editorialTape"
     style={`left:${stageCenterXPx}px; top:${stageSubtitleYPx}px; width:${editorialWidthPx}px;`}
   >
-    <p class="editorialText">{activeEditorialText}</p>
+    <p class="editorialText" style={`font-size: clamp(${15 * subtitleScale}px, ${1.25 * subtitleScale}vw, ${21 * subtitleScale}px);`}>{activeEditorialText}</p>
   </section>
 {/if}
 

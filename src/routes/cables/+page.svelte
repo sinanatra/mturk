@@ -135,6 +135,7 @@
 
   let authoringHint = "";
   let syncFocusToEditorial = true;
+  let subtitleScale = 1;
 
   function stopRecordingStream() {
     if (recordingRaf) {
@@ -2133,6 +2134,7 @@
       {stageSizePx}
       {stageSubtitleYPx}
       {editorialWidthPx}
+      {subtitleScale}
     />
 
     <section
@@ -2156,12 +2158,14 @@
       {isRecording4K}
       {recordingError}
       {authoringHint}
+      {subtitleScale}
       on:togglePause={() => (paused = !paused)}
       on:nextStory={nextStory}
       on:prevText={prevText}
       on:nextText={nextText}
       on:toggleSyncFocus={() => (syncFocusToEditorial = !syncFocusToEditorial)}
       on:toggleRecording={toggle4KRecording}
+      on:subtitleScaleChange={(e) => (subtitleScale = e.detail)}
     />
 
     <svelte:component this={P5} {sketch} />
